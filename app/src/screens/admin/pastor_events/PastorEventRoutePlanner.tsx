@@ -212,7 +212,9 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
           </View>
         </View>
 
-
+        {/* Transport Mode Toggle */}
+        <Text style={styles.sectionTitle}>Select Travel Mode</Text>
+        <TransportToggle value={mode} onChange={setMode} />
 
         {/* Conflict Warning Banner */}
         {conflicts.length > 0 ? (
@@ -231,11 +233,6 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
             <Text style={styles.successText}>All travel timings align. No conflicts.</Text>
           </View>
         )}
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md }}>
-          <Text style={styles.sectionTitle}>Route Plan</Text>
-          <TransportToggle value={mode} onChange={setMode} />
-        </View>
 
         <View style={{ backgroundColor: '#fff', padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, elevation: 2 }}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
