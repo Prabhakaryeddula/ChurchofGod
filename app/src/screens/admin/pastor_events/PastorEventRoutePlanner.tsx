@@ -89,7 +89,6 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
         let duration = carMins;
         if (mode === 'bike') duration = Math.round(carMins * 2.5);
         else if (mode === 'walk') duration = Math.round(carMins * 8);
-        else if (mode === 'bus') duration = Math.round(carMins * 1.5);
 
         generatedLegs.push({
           distKm: distKm,
