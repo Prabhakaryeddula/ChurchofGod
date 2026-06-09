@@ -28,7 +28,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
   const [eventType, setEventType] = useState('');
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
-  const [durationMins, setDurationMins] = useState('60');
+  const [durationHours, setDurationHours] = useState('1');
   const [venue, setVenue] = useState('');
   const [address, setAddress] = useState('');
   const [pinCode, setPinCode] = useState('');
@@ -86,8 +86,8 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       startDateTime.setSeconds(0);
       startDateTime.setMilliseconds(0);
 
-      const durationNum = parseInt(durationMins) || 60;
-      const endDateTime = new Date(startDateTime.getTime() + durationNum * 60 * 1000);
+      const durationMinsNum = (parseFloat(durationHours) || 1) * 60;
+      const endDateTime = new Date(startDateTime.getTime() + durationMinsNum * 60 * 1000);
 
       // Build full address with PIN code for geocoding
       const fullAddress = pinCode
@@ -187,7 +187,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
               <Text style={styles.label}>Start Time *</Text>
               <TouchableOpacity style={styles.dropdown} onPress={() => setShowTimePicker(true)}>
                 <Text style={styles.dropdownText}>
-                  {startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                  {startTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </Text>
                 <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
@@ -206,20 +206,20 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
           </View>
 
           <View style={[styles.inputGroup, { marginTop: spacing.md }]}>
-            <Text style={styles.label}>Event Meeting Length (Minutes) *</Text>
+            <Text style={styles.label}>Event Meeting Length (Hours) *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. 60"
+              placeholder="e.g. 1.5"
               keyboardType="numeric"
-              value={durationMins}
-              onChangeText={setDurationMins}
+              value={durationHours}
+              onChangeText={setDurationHours}
             />
           </View>
         </View>
 
         {/* Location & Address Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Location & Geolocation</Text>
+          <Text style={styles.cardTitle}>Destination</Text>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Venue Name *</Text>
@@ -253,13 +253,6 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
               value={pinCode}
               onChangeText={setPinCode}
             />
-          </View>
-
-          <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f0fdf4', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#bbf7d0' }]}>
-            <Ionicons name="location" size={14} color="#15803D" />
-            <Text style={{ fontSize: 11, color: '#15803D', fontWeight: '500', flex: 1 }}>
-              Latitude, Longitude &amp; Travel times are auto-computed from the address — no manual entry needed.
-            </Text>
           </View>
         </View>
 
@@ -303,7 +296,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
           ) : (
             <>
               <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
-              <Text style={styles.saveButtonText}>Create Salesforce Event</Text>
+              <Text style={styles.saveButtonText}>Create Event</Text>
             </>
           )}
         </TouchableOpacity>
