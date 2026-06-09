@@ -29,10 +29,24 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
     }
   };
 
+  // Helper to convert time strings like "9:00 AM" to sortable minutes
+  const timeToMins = (timeStr: string) => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(' ');
+    if (parts.length < 2) return 0;
+    const [time, modifier] = parts;
+    let [hours, minutes] = time.split(':');
+    let h = parseInt(hours, 10);
+    let m = parseInt(minutes || '0', 10);
+    if (h === 12) h = 0;
+    if (modifier.toUpperCase() === 'PM') h += 12;
+    return h * 60 + m;
+  };
+
   // Find next event for route planner link
   const sameDayEvents = allEvents
     .filter(e => e.date === event.date)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    .sort((a, b) => timeToMins(a.startTime) - timeToMins(b.startTime));
   
   const eventIndex = sameDayEvents.findIndex(e => e.id === event.id);
   const nextEvent = sameDayEvents[eventIndex + 1];
