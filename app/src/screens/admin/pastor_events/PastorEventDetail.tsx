@@ -62,17 +62,19 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
         {/* Main Header Info Card */}
         <View style={styles.card}>
           <View style={styles.badgeRow}>
-            <EventTypeBadge type={event.type} />
             <Text style={styles.dateText}>{formatDate(event.date)}</Text>
           </View>
 
           <Text style={styles.mainTitle}>{event.title}</Text>
 
-          <View style={styles.timeRow}>
-            <Ionicons name="time-outline" size={18} color={colors.primary} />
-            <Text style={styles.timeVal}>
-              Starts at {event.startTime}  |  Time Spent at Event: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
-            </Text>
+          <View style={[styles.timeRow, { alignItems: 'flex-start' }]}>
+            <Ionicons name="time-outline" size={18} color={colors.primary} style={{ marginTop: 2 }} />
+            <View style={{ flex: 1, marginLeft: 4 }}>
+              <Text style={styles.timeVal}>Starts at {event.startTime}</Text>
+              <Text style={[styles.timeVal, { marginTop: 4, color: colors.textSecondary }]}>
+                Time Spent at Event: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -117,7 +119,9 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Venue & Location</Text>
           <Text style={styles.venueTitle}>{event.venue}</Text>
-          <Text style={styles.addressText}>{event.address}</Text>
+          {event.address && event.address !== event.venue && (
+            <Text style={styles.addressText}>{event.address}</Text>
+          )}
 
           <TouchableOpacity style={styles.mapsButton} onPress={handleDirections}>
             <Ionicons name="navigate-outline" size={18} color="#FFF" />
