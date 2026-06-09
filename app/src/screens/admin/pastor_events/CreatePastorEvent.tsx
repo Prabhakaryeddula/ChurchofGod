@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Location from 'expo-location';
+import Geolocation from '@react-native-community/geolocation';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
@@ -96,29 +96,32 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       // --- Location & Distance Calculation ---
       let travelInfo = '';
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          const { latitude, longitude } = location.coords;
+        const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+        
+        // Wrap Geolocation in a Promise
+        const getPosition = () => new Promise<any>((resolve, reject) => {
+          Geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+        });
+
+        const location = await getPosition();
+        const { latitude, longitude } = location.coords;
+        
+        if (GOOGLE_KEY) {
+          // Reverse geocode current location
+          let currentLocationStr = 'Current Location';
+          const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
+          const revGeoData = await revGeoResp.json();
+          if (revGeoData.status === 'OK' && revGeoData.results.length > 0) {
+            currentLocationStr = revGeoData.results[0].formatted_address;
+          }
           
-          const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
-          if (GOOGLE_KEY) {
-            // Reverse geocode current location
-            let currentLocationStr = 'Current Location';
-            const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
-            const revGeoData = await revGeoResp.json();
-            if (revGeoData.status === 'OK' && revGeoData.results.length > 0) {
-              currentLocationStr = revGeoData.results[0].formatted_address;
-            }
-            
-            // Get Distance & Time
-            const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
-            const distData = await distResp.json();
-            
-            if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
-              const distElement = distData.rows[0].elements[0];
-              travelInfo = `\n\n--- Travel Estimation ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
-            }
+          // Get Distance & Time
+          const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
+          const distData = await distResp.json();
+          
+          if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+            const distElement = distData.rows[0].elements[0];
+            travelInfo = `\n\n--- Travel Estimation ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
           }
         }
       } catch (err) {
