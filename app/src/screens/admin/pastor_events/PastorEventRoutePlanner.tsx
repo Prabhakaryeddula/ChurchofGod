@@ -14,6 +14,7 @@ import { colors, spacing, radius, typography, shadow } from '../../../theme/Them
 import { PastorEvent, TransportMode } from '../../../types/event';
 import { openRoute } from '../../../utils/maps';
 import { detectConflicts } from '../../../utils/conflicts';
+import { saveStartingLocation, getStartingLocation, formatDuration } from '../../../utils/locationStore';
 import TransportToggle from '../../../components/TransportToggle';
 import RouteChain, { RouteStop, RouteLeg } from '../../../components/RouteChain';
 
@@ -30,11 +31,18 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   // Sort events by time to plan the route sequentially
   const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  // Initialize with IP-based or fallback location
+  // Initialize with saved location, then IP-based fallback if none saved
   useEffect(() => {
     const fetchInitialLoc = async () => {
       try {
         setIsGeocoding(true);
+        const saved = await getStartingLocation();
+        if (saved && saved.lat && saved.lng && saved.name) {
+          setCurrentLoc({ lat: saved.lat, lng: saved.lng });
+          setCurrentLocName(saved.name);
+          return;
+        }
+
         const ipResp = await fetch('http://ip-api.com/json/');
         const ipData = await ipResp.json();
         if (ipData && ipData.lat && ipData.lon) {
@@ -63,6 +71,9 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
       if (geoData.status === 'OK' && geoData.results.length > 0) {
         const { lat, lng } = geoData.results[0].geometry.location;
         setCurrentLoc({ lat, lng });
+        
+        // Save back for persistence across app
+        await saveStartingLocation({ name: newAddress, lat, lng });
       }
     } catch (e) {
       console.log('Geocoding failed');
@@ -201,12 +212,12 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>{totalDistance.toFixed(1)} km</Text>
+              <Text style={styles.statVal}>{Math.round(totalDistance)} km</Text>
               <Text style={styles.statLbl}>Total Distance</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>{totalDuration} mins</Text>
+              <Text style={styles.statVal}>{formatDuration(totalDuration)}</Text>
               <Text style={styles.statLbl}>Travel Time</Text>
             </View>
           </View>

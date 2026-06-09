@@ -8,16 +8,17 @@ import {
   StyleSheet,
   SafeAreaView,
   RefreshControl,
-  StatusBar
+  StatusBar,
+  TextInput
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Location from 'expo-location';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import { PastorEvent } from '../../../types/event';
 import SalesforceService from '../../../services/SalesforceService';
 import EventTypeBadge from '../../../components/EventTypeBadge';
 import DistanceBadge from '../../../components/DistanceBadge';
+import { getStartingLocation, saveStartingLocation, formatDuration } from '../../../utils/locationStore';
 
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -83,6 +84,8 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     : events.filter(evt => evt.section === activeTab);
 
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
+  const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   useEffect(() => {
     const calcStats = async () => {
@@ -100,11 +103,19 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         let prevLng = 80.4365;
 
         try {
-          const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status === 'granted') {
-            const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-            prevLat = location.coords.latitude;
-            prevLng = location.coords.longitude;
+          const saved = await getStartingLocation();
+          if (saved && saved.lat && saved.lng && saved.name) {
+            prevLat = saved.lat;
+            prevLng = saved.lng;
+            setCurrentLocName(saved.name);
+          } else {
+            const ipResp = await fetch('http://ip-api.com/json/');
+            const ipData = await ipResp.json();
+            if (ipData && ipData.lat && ipData.lon) {
+              prevLat = ipData.lat;
+              prevLng = ipData.lon;
+              setCurrentLocName(ipData.city || 'Guntur, AP');
+            }
           }
         } catch (e) {
           // Fallback to Guntur if location fails
@@ -135,6 +146,30 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
 
     calcStats();
   }, [activeTab, selectedDateFilter, events.length]);
+
+  const handleAddressSubmit = async (newAddress: string) => {
+    if (!newAddress.trim()) return;
+    const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+    if (!GOOGLE_KEY) return;
+    
+    setIsGeocoding(true);
+    try {
+      const geoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(newAddress)}&key=${GOOGLE_KEY}`);
+      const geoData = await geoResp.json();
+      if (geoData.status === 'OK' && geoData.results.length > 0) {
+        const { lat, lng } = geoData.results[0].geometry.location;
+        await saveStartingLocation({ name: newAddress, lat, lng });
+        
+        // Force refresh by toggling tab off and on, or by manually calling calcStats.
+        // Easiest is just manually trigger a state update.
+        setEvents([...events]); // Hacky but forces calcStats effect
+      }
+    } catch (e) {
+      console.log('Geocoding failed');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   // Statistics summaries
   const totalEvents = filteredEvents.length;
@@ -259,6 +294,23 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         </View>
       )}
 
+      {/* Starting Location Bar */}
+      <View style={{ backgroundColor: '#fff', padding: spacing.md, marginHorizontal: spacing.md, marginBottom: spacing.sm, borderRadius: radius.md, elevation: 1 }}>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 4 }}>
+          STARTING FROM
+        </Text>
+        <TextInput
+          style={{ backgroundColor: colors.bgSecondary, padding: 8, borderRadius: radius.sm, fontSize: 14, color: colors.textPrimary }}
+          value={currentLocName}
+          onChangeText={setCurrentLocName}
+          onEndEditing={(e) => handleAddressSubmit(e.nativeEvent.text)}
+          placeholder="Type starting address..."
+        />
+        <Text style={{ fontSize: 10, color: colors.textTertiary, marginTop: 4 }}>
+          {isGeocoding ? 'Updating...' : 'Press Enter to update distances.'}
+        </Text>
+      </View>
+
       {/* Stats Strip */}
       <View style={styles.statsStrip}>
         <View style={styles.statBox}>
@@ -267,12 +319,12 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
-          <Text style={styles.statVal}>{totalDistance.toFixed(1)} km</Text>
+          <Text style={styles.statVal}>{Math.round(totalDistance)} km</Text>
           <Text style={styles.statLbl}>Travel Dist</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
-          <Text style={styles.statVal}>{totalTravelTimeCar} min</Text>
+          <Text style={styles.statVal}>{formatDuration(totalTravelTimeCar)}</Text>
           <Text style={styles.statLbl}>Travel Time</Text>
         </View>
       </View>
