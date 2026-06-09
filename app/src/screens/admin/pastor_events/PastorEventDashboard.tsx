@@ -228,14 +228,16 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
-        alignSelf: 'flex-start',
-        backgroundColor: colors.bgTertiary,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        alignSelf: 'center',
+        backgroundColor: colors.bgPrimary,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: radius.md,
-        marginTop: 4
+        borderWidth: 1,
+        borderColor: colors.primary,
+        marginTop: 8
       }}>
-        <Ionicons name="map-outline" size={14} color={colors.primary} />
+        <Ionicons name="location-outline" size={16} color={colors.primary} />
         <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: '600', color: colors.primary }}>
           Click here to know the location
         </Text>
