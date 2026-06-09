@@ -840,10 +840,10 @@ spfkUchVp71l4aWpCW50lro=
 
   async fetchEvents(limit = 10): Promise<any[]> {
     try {
-      const soql = `SELECT Id, Subject, Title_Telugu__c, ActivityDate, StartDateTime, EndDateTime, Description, Description_Telugu__c, Location, Location_Telugu__c, Address__c, Type, Event_Mode__c, RSVP_Enabled__c, Show_RSVP_Count__c, Attendance_Cap__c, Audience__c, Status__c, Banner_Image_URL__c, Banner_Color__c, Recurring_Frequency__c, YouTube_ID__c FROM Event WHERE Status__c = 'Published' AND ActivityDate >= TODAY ORDER BY ActivityDate ASC LIMIT ${limit}`;
+      const soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Description, Description_Telugu__c, Location, Location_Telugu__c, Address__c, Type, Event_Mode__c, RSVP_Enabled__c, Show_RSVP_Count__c, Attendance_Cap__c, Audience__c, Status__c, Banner_Image_URL__c, Banner_Color__c, Recurring_Frequency__c, YouTube_ID__c FROM Event WHERE Status__c = 'Published' AND ActivityDate >= TODAY ORDER BY ActivityDate ASC LIMIT ${limit}`;
       const result = await this.query(soql, true).catch(async () => {
         console.warn('⚠️ [SalesforceService] Some event fields missing, falling back.');
-        const fallbackSoql = `SELECT Id, Subject, Title_Telugu__c, ActivityDate, StartDateTime, Location, Status__c FROM Event WHERE Status__c = 'Published' AND ActivityDate >= TODAY ORDER BY ActivityDate ASC LIMIT ${limit}`;
+        const fallbackSoql = `SELECT Id, Subject, ActivityDate, StartDateTime, Location, Status__c FROM Event WHERE Status__c = 'Published' AND ActivityDate >= TODAY ORDER BY ActivityDate ASC LIMIT ${limit}`;
         return await this.query(fallbackSoql);
       });
 
@@ -863,7 +863,7 @@ spfkUchVp71l4aWpCW50lro=
         return {
           id: rec.Id,
           name: rec.Subject,
-          titleTe: rec.Title_Telugu__c,
+          titleTe: '',
           date: rec.ActivityDate || start.date,
           startTime: start.time,
           endTime: end.time,
@@ -923,7 +923,7 @@ spfkUchVp71l4aWpCW50lro=
 
   async getEvents(limit = 50): Promise<any[]> {
     try {
-      const soql = `SELECT Id, Subject, Title_Telugu__c, ActivityDate, StartDateTime, EndDateTime, Description, Description_Telugu__c, Location, Location_Telugu__c, Address__c, Type, Event_Mode__c, RSVP_Enabled__c, Show_RSVP_Count__c, Attendance_Cap__c, Audience__c, Status__c, Banner_Image_URL__c, Banner_Color__c, Recurring_Frequency__c, YouTube_ID__c FROM Event ORDER BY ActivityDate DESC LIMIT ${limit}`;
+      const soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Description, Description_Telugu__c, Location, Location_Telugu__c, Address__c, Type, Event_Mode__c, RSVP_Enabled__c, Show_RSVP_Count__c, Attendance_Cap__c, Audience__c, Status__c, Banner_Image_URL__c, Banner_Color__c, Recurring_Frequency__c, YouTube_ID__c FROM Event ORDER BY ActivityDate DESC LIMIT ${limit}`;
       const result = await this.query(soql);
 
       const parseDT = (dt: string) => {
@@ -942,7 +942,7 @@ spfkUchVp71l4aWpCW50lro=
         return {
           id: rec.Id,
           name: rec.Subject,
-          titleTe: rec.Title_Telugu__c,
+          titleTe: '',
           date: rec.ActivityDate || start.date,
           startTime: start.time,
           endTime: end.time,
@@ -981,7 +981,6 @@ spfkUchVp71l4aWpCW50lro=
 
       const body: any = {
         Subject: details.titleEn,
-        Title_Telugu__c: details.titleTe,
         StartDateTime: toISO(details.date, details.startTime),
         EndDateTime:   toISO(details.date, details.endTime),
         Description: details.descEn,
@@ -1060,7 +1059,7 @@ spfkUchVp71l4aWpCW50lro=
 
   async getUpcomingEvents(limit = 10): Promise<any[]> {
     try {
-      const soql = `SELECT Id, Subject, Title_Telugu__c, ActivityDate, StartDateTime, EndDateTime, Location, Description, Banner_Image_URL__c, YouTube_ID__c FROM Event WHERE ActivityDate >= TODAY ORDER BY ActivityDate ASC, StartDateTime ASC LIMIT ${limit}`;
+      const soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location, Description, Banner_Image_URL__c, YouTube_ID__c FROM Event WHERE ActivityDate >= TODAY ORDER BY ActivityDate ASC, StartDateTime ASC LIMIT ${limit}`;
       const result = await this.query(soql);
       const parseDT = (dt: string) => {
         if (!dt) return { date: '', time: '' };
@@ -1077,7 +1076,7 @@ spfkUchVp71l4aWpCW50lro=
         return {
           id: rec.Id,
           title: rec.Subject,
-          titleTelugu: rec.Title_Telugu__c,
+          titleTelugu: '',
           date: rec.ActivityDate || start.date,
           startTime: start.time,
           endTime: end.time,
@@ -1096,7 +1095,7 @@ spfkUchVp71l4aWpCW50lro=
 
   async getPastEvents(limit = 10): Promise<any[]> {
     try {
-      const soql = `SELECT Id, Subject, Title_Telugu__c, ActivityDate, StartDateTime, EndDateTime, Location, Description, Banner_Image_URL__c, YouTube_ID__c FROM Event WHERE ActivityDate < TODAY ORDER BY ActivityDate DESC LIMIT ${limit}`;
+      const soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location, Description, Banner_Image_URL__c, YouTube_ID__c FROM Event WHERE ActivityDate < TODAY ORDER BY ActivityDate DESC LIMIT ${limit}`;
       const result = await this.query(soql);
       const parseDT = (dt: string) => {
         if (!dt) return { date: '', time: '' };
@@ -1113,7 +1112,7 @@ spfkUchVp71l4aWpCW50lro=
         return {
           id: rec.Id,
           title: rec.Subject,
-          titleTelugu: rec.Title_Telugu__c,
+          titleTelugu: '',
           date: rec.ActivityDate || start.date,
           startTime: start.time,
           endTime: end.time,
