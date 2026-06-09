@@ -230,6 +230,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
               <Text style={styles.plannerLinkText}>Open Route Itinerary</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </TouchableOpacity>
+          </View>
         )}
 
         {/* Action Buttons */}
