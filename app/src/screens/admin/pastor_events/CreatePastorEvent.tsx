@@ -9,10 +9,13 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
-  Alert
+  Alert,
+  Platform,
+  PermissionsAndroid
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Geolocation from '@react-native-community/geolocation';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
@@ -85,12 +88,53 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       startDateTime.setSeconds(0);
       startDateTime.setMilliseconds(0);
 
-      const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
+      const durationNum = parseInt(durationMins) || 60;
+      const endDateTime = new Date(startDateTime.getTime() + durationNum * 60 * 1000);
 
       // Build full address with PIN code for geocoding
       const fullAddress = pinCode
         ? `${address.trim()}, ${pinCode.trim()}`
         : address.trim();
+
+      // --- Location & Distance Calculation ---
+      let travelInfo = '';
+      try {
+        const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+        
+        let hasPerm = true;
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+          hasPerm = granted === PermissionsAndroid.RESULTS.GRANTED;
+        }
+
+        if (hasPerm && GOOGLE_KEY) {
+          const getPosition = () => new Promise<any>((resolve, reject) => {
+            Geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10000 });
+          });
+
+          const location = await getPosition();
+          const { latitude, longitude } = location.coords;
+
+          // Reverse geocode current location
+          let currentLocationStr = 'Current Location';
+          const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
+          const revGeoData = await revGeoResp.json();
+          if (revGeoData.status === 'OK' && revGeoData.results.length > 0) {
+            currentLocationStr = revGeoData.results[0].formatted_address;
+          }
+          
+          // Get Distance & Time
+          const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
+          const distData = await distResp.json();
+          
+          if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+            const distElement = distData.rows[0].elements[0];
+            travelInfo = `\n\n--- Travel Estimation (From Current Location) ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
+          }
+        }
+      } catch (err) {
+        console.warn('Location calculation error:', err);
+      }
 
       // Construct Salesforce Event payload — only standard fields that definitely exist
       const payload: any = {
@@ -98,7 +142,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         StartDateTime: startDateTime.toISOString(),
         EndDateTime: endDateTime.toISOString(),
         Location: `${venue.trim()} — ${fullAddress}`,
-        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}`,
+        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}${travelInfo}`,
       };
 
       // Temporarily disabled WhoId because it causes "invalid cross reference id" 
@@ -201,6 +245,17 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
                 />
               )}
             </View>
+          </View>
+
+          <View style={[styles.inputGroup, { marginTop: spacing.md }]}>
+            <Text style={styles.label}>Event Meeting Length (Minutes) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 60"
+              keyboardType="numeric"
+              value={durationMins}
+              onChangeText={setDurationMins}
+            />
           </View>
         </View>
 

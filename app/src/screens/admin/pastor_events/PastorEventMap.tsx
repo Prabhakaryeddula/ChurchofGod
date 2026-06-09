@@ -7,9 +7,13 @@ import {
   Dimensions,
   FlatList,
   SafeAreaView,
-  StatusBar
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  PermissionsAndroid
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Geolocation from '@react-native-community/geolocation';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import { PastorEvent } from '../../../types/event';
 import EventTypeBadge from '../../../components/EventTypeBadge';
@@ -179,6 +183,7 @@ const markerColors = {
 export const PastorEventMap = ({ route, navigation }: { route: any; navigation: any }) => {
   const { events = [] } = route.params as { events: PastorEvent[] };
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const mapRef = useRef<any>(null);
   const flatListRef = useRef<FlatList>(null);
 
@@ -210,6 +215,10 @@ export const PastorEventMap = ({ route, navigation }: { route: any; navigation: 
         longitude: e.lng
       }));
       
+      if (currentLocation) {
+        coordinates.push({ latitude: currentLocation.lat, longitude: currentLocation.lng });
+      }
+
       // Add a slight delay for component mounting
       setTimeout(() => {
         mapRef.current?.fitToCoordinates(coordinates, {
@@ -218,7 +227,28 @@ export const PastorEventMap = ({ route, navigation }: { route: any; navigation: 
         });
       }, 500);
     }
-  }, [events]);
+  }, [events, currentLocation]);
+
+  // Fetch Current Location
+  useEffect(() => {
+    const fetchLoc = async () => {
+      let hasPerm = true;
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        hasPerm = granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+      if (hasPerm) {
+        Geolocation.getCurrentPosition(
+          (pos) => {
+            setCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          },
+          (err) => console.log('Map location err', err),
+          { enableHighAccuracy: false, timeout: 15000 }
+        );
+      }
+    };
+    fetchLoc();
+  }, []);
 
   const selectEvent = (item: PastorEvent, index: number) => {
     setSelectedEventId(item.id);
@@ -275,10 +305,13 @@ export const PastorEventMap = ({ route, navigation }: { route: any; navigation: 
   };
 
   // Convert points for polyline
-  const routePoints = sortedEvents.map(e => ({
-    latitude: e.lat,
-    longitude: e.lng
-  }));
+  const routePoints: any[] = [];
+  if (currentLocation) {
+    routePoints.push({ latitude: currentLocation.lat, longitude: currentLocation.lng });
+  }
+  sortedEvents.forEach(e => {
+    routePoints.push({ latitude: e.lat, longitude: e.lng });
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -310,6 +343,21 @@ export const PastorEventMap = ({ route, navigation }: { route: any; navigation: 
               strokeWidth={4}
               lineDashPattern={[0]}
             />
+          )}
+
+          {/* Current Location Marker */}
+          {currentLocation && (
+            <Marker
+              coordinate={{ latitude: currentLocation.lat, longitude: currentLocation.lng }}
+              pinColor="#3B82F6"
+            >
+              <Callout tooltip>
+                <View style={[styles.calloutContainer, { width: 150 }]}>
+                  <Text style={styles.calloutTitle}>Current Location</Text>
+                  <Text style={styles.calloutTime}>Starting Point</Text>
+                </View>
+              </Callout>
+            </Marker>
           )}
 
           {/* Custom Marker Pins */}
