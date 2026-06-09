@@ -212,9 +212,7 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
           </View>
         </View>
 
-        {/* Transport Mode Toggle */}
-        <Text style={styles.sectionTitle}>Select Travel Mode</Text>
-        <TransportToggle value={mode} onChange={setMode} />
+
 
         {/* Conflict Warning Banner */}
         {conflicts.length > 0 ? (
