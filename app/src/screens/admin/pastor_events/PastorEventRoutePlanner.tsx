@@ -189,9 +189,11 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
     // Use Guntur central coordinates for home / first waypoint if empty,
     // otherwise use first event's coordinates minus a tiny offset for home, or first event directly
     const coordinates = sortedEvents.map(e => ({ lat: e.lat, lng: e.lng }));
-    // Add home coordinate at the start if available. For demo, we start at first event or NTR stadium
-    if (coordinates.length > 0) {
-      // Prepend a starting office location near the first event
+    
+    if (currentLoc && currentLoc.lat && currentLoc.lng) {
+      coordinates.unshift(currentLoc);
+    } else if (coordinates.length > 0) {
+      // fallback if currentLoc somehow fails
       const first = coordinates[0];
       coordinates.unshift({ lat: first.lat + 0.01, lng: first.lng - 0.01 });
     }
