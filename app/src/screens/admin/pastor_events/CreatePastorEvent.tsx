@@ -17,11 +17,22 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
+import { CustomAlert, AlertButton } from '../../../components/CustomAlert';
 
 export const CreatePastorEvent = ({ route, navigation }: { route: any; navigation: any }) => {
   const { member } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fallbackContactId, setFallbackContactId] = useState<string | null>(null);
+
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '', message: '', type: 'info' });
+
+  const closeAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   // Form State
   const [title, setTitle] = useState('');
@@ -96,21 +107,21 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Validation Error', 'Please enter an event title.');
+      setAlertConfig({ visible: true, title: 'Validation Error', message: 'Please enter an event title.', type: 'warning' });
       return;
     }
     if (!venue.trim()) {
-      Alert.alert('Validation Error', 'Please enter a venue name.');
+      setAlertConfig({ visible: true, title: 'Validation Error', message: 'Please enter a venue name.', type: 'warning' });
       return;
     }
     if (!address.trim()) {
-      Alert.alert('Validation Error', 'Please enter a full address for maps integration.');
+      setAlertConfig({ visible: true, title: 'Validation Error', message: 'Please enter a full address for maps integration.', type: 'warning' });
       return;
     }
 
     const targetContactId = member?.id || fallbackContactId;
     if (!targetContactId) {
-      Alert.alert('Salesforce Error', 'Could not locate an Admin Contact record to link this event to. Please check your internet connection.');
+      setAlertConfig({ visible: true, title: 'Salesforce Error', message: 'Could not locate an Admin Contact record to link this event to. Please check your internet connection.', type: 'error' });
       return;
     }
 
@@ -151,16 +162,27 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
         try {
           if (editEvent) {
             await SalesforceService.updatePastorEvent(editEvent.id, payload);
-            Alert.alert('✅ Success', 'Pastor event updated successfully!');
+            setAlertConfig({
+              visible: true,
+              title: 'Success',
+              message: 'Pastor event updated successfully!',
+              type: 'success',
+              buttons: [{ text: 'OK', onPress: () => { closeAlert(); navigation.navigate('Dashboard'); } }]
+            });
           } else {
             await SalesforceService.createPastorEvent(payload);
-            Alert.alert('✅ Success', 'Pastor event created successfully!');
+            setAlertConfig({
+              visible: true,
+              title: 'Success',
+              message: 'Pastor event created successfully!',
+              type: 'success',
+              buttons: [{ text: 'OK', onPress: () => { closeAlert(); navigation.navigate('Dashboard'); } }]
+            });
           }
-          navigation.navigate('Dashboard');
         } catch (e: any) {
           const msg = e?.message || 'An unexpected error occurred.';
           console.error('❌ [CreatePastorEvent] Save failed:', msg);
-          Alert.alert('Save Failed', msg);
+          setAlertConfig({ visible: true, title: 'Save Failed', message: msg, type: 'error' });
         } finally {
           setLoading(false);
         }
@@ -222,14 +244,16 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
                   const requiredArrivalTimeMs = prevEndTimeMs + (travelTimeMins * 60000);
                   
                   if (requiredArrivalTimeMs > newEventStartMs) {
-                    Alert.alert(
-                      'Schedule Conflict Detected',
-                      `Insufficient travel time between your previous stop (${prevEvent.title}) and this new location.\n\nEstimated travel time is ${travelTimeMins >= 60 ? `${Math.round(travelTimeMins / 60 * 10) / 10} hours` : `${travelTimeMins} minutes`}.`,
-                      [
-                        { text: 'Cancel', style: 'cancel', onPress: () => setLoading(false) },
-                        { text: 'Proceed Anyway', onPress: () => executeSave() }
+                    setAlertConfig({
+                      visible: true,
+                      title: 'Schedule Conflict',
+                      message: `Insufficient travel time between your previous stop (${prevEvent.title}) and this new location.\n\nEstimated travel time is ${travelTimeMins >= 60 ? `${Math.round(travelTimeMins / 60 * 10) / 10} hours` : `${travelTimeMins} minutes`}.`,
+                      type: 'warning',
+                      buttons: [
+                        { text: 'Cancel', style: 'cancel', onPress: () => { setLoading(false); closeAlert(); } },
+                        { text: 'Proceed Anyway', onPress: () => { closeAlert(); executeSave(); } }
                       ]
-                    );
+                    });
                     return; // Pause here!
                   }
                 }
@@ -246,7 +270,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
     } catch (e: any) {
       const msg = e?.message || 'An unexpected error occurred.';
       console.error('❌ [CreatePastorEvent] Pre-save failed:', msg);
-      Alert.alert('Save Failed', msg);
+      setAlertConfig({ visible: true, title: 'Save Failed', message: msg, type: 'error' });
       setLoading(false);
     }
   };
@@ -254,6 +278,15 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bgPrimary} />
+      
+      <CustomAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={alertConfig.buttons}
+        onClose={closeAlert}
+      />
       
       {/* Header */}
       <View style={styles.header}>

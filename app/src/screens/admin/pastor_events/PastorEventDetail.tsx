@@ -14,6 +14,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
+import { CustomAlert, AlertButton } from '../../../components/CustomAlert';
 import { PastorEvent } from '../../../types/event';
 import { openInMaps } from '../../../utils/maps';
 import EventTypeBadge from '../../../components/EventTypeBadge';
@@ -22,6 +23,16 @@ import DistanceBadge from '../../../components/DistanceBadge';
 export const PastorEventDetail = ({ route, navigation }: { route: any; navigation: any }) => {
   const { event, allEvents = [] } = route.params as { event: PastorEvent; allEvents: PastorEvent[] };
   const [deleting, setDeleting] = React.useState(false);
+
+  const [alertConfig, setAlertConfig] = React.useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '', message: '', type: 'info' });
+
+  const closeAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   // Format date nicely
   const formatDate = (dateStr: string) => {
@@ -68,33 +79,62 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Event',
-      'Are you sure you want to permanently delete this event?',
-      [
-        { text: 'Cancel', style: 'cancel' },
+    setAlertConfig({
+      visible: true,
+      title: 'Delete Event',
+      message: 'Are you sure you want to permanently delete this event?',
+      type: 'warning',
+      buttons: [
+        { text: 'Cancel', style: 'cancel', onPress: closeAlert },
         { 
           text: 'Delete', 
           style: 'destructive',
           onPress: async () => {
+            closeAlert();
             try {
               setDeleting(true);
               await SalesforceService.deletePastorEvent(event.id);
-              Alert.alert('Deleted', 'Event has been deleted.');
-              navigation.navigate('Dashboard');
+              
+              // Slight delay so the previous modal can unmount fully before showing success
+              setTimeout(() => {
+                setAlertConfig({
+                  visible: true,
+                  title: 'Deleted',
+                  message: 'Event has been deleted.',
+                  type: 'success',
+                  buttons: [{ text: 'OK', onPress: () => { closeAlert(); navigation.navigate('Dashboard'); } }]
+                });
+              }, 300);
             } catch (err: any) {
-              Alert.alert('Delete Failed', err?.message || 'Could not delete event.');
               setDeleting(false);
+              setTimeout(() => {
+                setAlertConfig({
+                  visible: true,
+                  title: 'Delete Failed',
+                  message: err?.message || 'Could not delete event.',
+                  type: 'error',
+                  buttons: [{ text: 'OK', onPress: closeAlert }]
+                });
+              }, 300);
             }
           }
         }
       ]
-    );
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bgPrimary} />
+      
+      <CustomAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={alertConfig.buttons}
+        onClose={closeAlert}
+      />
       
       {/* Top Navigation Bar */}
       <View style={styles.navBar}>
