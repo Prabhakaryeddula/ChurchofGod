@@ -81,10 +81,53 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     ? events.filter(evt => evt.date === selectedDateFilter)
     : events.filter(evt => evt.section === activeTab);
 
+  const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
+
+  useEffect(() => {
+    const calcStats = async () => {
+      setDynamicStats({ km: 0, mins: 0, loading: true });
+      const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+      if (!GOOGLE_KEY || filteredEvents.length === 0) {
+        setDynamicStats({ km: 0, mins: 0, loading: false });
+        return;
+      }
+      
+      try {
+        let totalKm = 0;
+        let totalMins = 0;
+        let prevLat = 16.3067; // Starting home base roughly (Guntur)
+        let prevLng = 80.4365;
+
+        for (let i = 0; i < filteredEvents.length; i++) {
+          const evt = filteredEvents[i];
+          if (evt.lat && evt.lng) {
+            // First event connects to home base, others connect sequentially
+            const originStr = i === 0 ? `${prevLat},${prevLng}` : `${filteredEvents[i-1].lat},${filteredEvents[i-1].lng}`;
+            const destStr = `${evt.lat},${evt.lng}`;
+            
+            const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_KEY}`);
+            const distData = await distResp.json();
+            if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+              const element = distData.rows[0].elements[0];
+              totalKm += element.distance.value / 1000;
+              totalMins += Math.round(element.duration.value / 60);
+            }
+          }
+        }
+        setDynamicStats({ km: totalKm, mins: totalMins, loading: false });
+      } catch(e) {
+        console.warn('Dashboard stats calc failed', e);
+        setDynamicStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    calcStats();
+  }, [activeTab, selectedDateFilter, events.length]);
+
   // Statistics summaries
   const totalEvents = filteredEvents.length;
-  const totalDistance = filteredEvents.reduce((acc, curr) => acc + (curr.travel?.distKm || 0), 0);
-  const totalTravelTimeCar = filteredEvents.reduce((acc, curr) => acc + (curr.travel?.car || 0), 0);
+  const totalDistance = dynamicStats.km;
+  const totalTravelTimeCar = dynamicStats.mins;
 
   const renderEventCard = ({ item }: { item: PastorEvent }) => (
     <TouchableOpacity

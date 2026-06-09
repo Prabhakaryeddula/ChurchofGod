@@ -9,6 +9,7 @@ import {
   StatusBar
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Location from 'expo-location';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import { PastorEvent, TransportMode } from '../../../types/event';
 import { openRoute } from '../../../utils/maps';
@@ -22,16 +23,45 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [legs, setLegs] = useState<RouteLeg[]>([]);
   const [conflicts, setConflicts] = useState<{ message: string }[]>([]);
+  const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | null>(null);
+  const [currentLocName, setCurrentLocName] = useState('Fetching Current Location...');
 
   // Sort events by time to plan the route sequentially
   const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setCurrentLocName('Home / Church Office');
+        return;
+      }
+      try {
+        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setCurrentLoc({ lat: location.coords.latitude, lng: location.coords.longitude });
+        
+        let reverse = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        });
+        if (reverse.length > 0) {
+          const r = reverse[0];
+          setCurrentLocName(r.name || r.street || r.city || 'Current Location');
+        } else {
+          setCurrentLocName('Current Location');
+        }
+      } catch (e) {
+        setCurrentLocName('Current Location');
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
     
     // Generate stops list
     const generatedStops: RouteStop[] = [
-      { label: 'Home / Church Office', sublabel: 'Starting Location', isHome: true }
+      { label: currentLocName, sublabel: 'Starting Point', isHome: true }
     ];
     
     sortedEvents.forEach(evt => {
@@ -51,9 +81,14 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
         let originLat, originLng;
         
         if (i === 0) {
-          // Travel from Home to 1st Event
-          originLat = destination.lat + 0.01;
-          originLng = destination.lng - 0.01;
+          // Travel from Current Location to 1st Event
+          if (currentLoc) {
+            originLat = currentLoc.lat;
+            originLng = currentLoc.lng;
+          } else {
+            originLat = destination.lat + 0.01;
+            originLng = destination.lng - 0.01;
+          }
         } else {
           // Travel from Event(i-1) to Event(i)
           originLat = sortedEvents[i - 1].lat;
@@ -103,7 +138,7 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
 
     calculateDistances();
 
-  }, [mode, events]);
+  }, [mode, events, currentLoc, currentLocName]);
 
   const handleLaunchGoogleMaps = () => {
     // Collect coordinates for the route
