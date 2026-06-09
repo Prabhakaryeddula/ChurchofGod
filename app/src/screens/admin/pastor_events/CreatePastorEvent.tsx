@@ -24,7 +24,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
 
   // Form State
   const [title, setTitle] = useState('');
-  const [eventType, setEventType] = useState('worship');
+  const [eventType, setEventType] = useState('');
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [durationMins, setDurationMins] = useState('60');
@@ -37,7 +37,6 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
   // UI state for Pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   useEffect(() => {
     // If not authenticated or member profile is missing, search Salesforce for an admin contact
@@ -55,14 +54,6 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       loadFallbackContact();
     }
   }, [member]);
-
-  const eventTypes = [
-    { label: 'Worship Service', value: 'worship' },
-    { label: 'Prayer Fellowship', value: 'prayer' },
-    { label: 'Leadership Meeting', value: 'meeting' },
-    { label: 'Community Outreach', value: 'outreach' },
-    { label: 'Pastoral Visit / Funeral', value: 'funeral' }
-  ];
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -164,31 +155,12 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Event Type</Text>
-            <TouchableOpacity style={styles.dropdown} onPress={() => setShowTypeDropdown(!showTypeDropdown)}>
-              <Text style={styles.dropdownText}>
-                {eventTypes.find(t => t.value === eventType)?.label || eventType}
-              </Text>
-              <Ionicons name={showTypeDropdown ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-            
-            {showTypeDropdown && (
-              <View style={styles.dropdownMenu}>
-                {eventTypes.map(t => (
-                  <TouchableOpacity
-                    key={t.value}
-                    style={[styles.dropdownItem, eventType === t.value && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setEventType(t.value);
-                      setShowTypeDropdown(false);
-                    }}
-                  >
-                    <Text style={[styles.dropdownItemText, eventType === t.value && styles.dropdownItemTextActive]}>
-                      {t.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Worship Service, Prayer Meeting"
+              value={eventType}
+              onChangeText={setEventType}
+            />
           </View>
 
           <View style={styles.row}>
