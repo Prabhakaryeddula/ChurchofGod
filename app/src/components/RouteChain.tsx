@@ -50,7 +50,9 @@ export const RouteChain = ({ stops, legs }: { stops: RouteStop[]; legs: RouteLeg
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textPrimary }}>
                   {legs[i].distKm.toFixed(1)} km
                 </Text>
-                <Text style={typography.caption}>· {legs[i].minutes} min</Text>
+                <Text style={typography.caption}>
+                  · {legs[i].minutes >= 60 ? `${Math.round(legs[i].minutes / 60 * 10) / 10} hours` : `${legs[i].minutes} mins`}
+                </Text>
               </View>
             )}
           </View>
