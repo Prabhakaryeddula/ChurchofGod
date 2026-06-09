@@ -233,7 +233,7 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       {item.address && item.address !== item.venue && (
         <View style={styles.addressRow}>
           <Ionicons name="map-outline" size={14} color={colors.textTertiary} />
-          <Text style={styles.addressText} numberOfLines={1}>{item.address}</Text>
+          <Text style={[styles.addressText, { fontStyle: 'italic', color: colors.primary }]} numberOfLines={1}>Click here to know the location</Text>
         </View>
       )}
 
