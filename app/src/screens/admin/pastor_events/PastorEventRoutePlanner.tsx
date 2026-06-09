@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  TextInput
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Location from 'expo-location';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import { PastorEvent, TransportMode } from '../../../types/event';
 import { openRoute } from '../../../utils/maps';
@@ -23,38 +23,50 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [legs, setLegs] = useState<RouteLeg[]>([]);
   const [conflicts, setConflicts] = useState<{ message: string }[]>([]);
+  const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
   const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | null>(null);
-  const [currentLocName, setCurrentLocName] = useState('Fetching Current Location...');
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
-  // Sort events by time to plan the route sequentially
-  const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
-
+  // Initialize with IP-based or fallback location
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setCurrentLocName('Home / Church Office');
-        return;
-      }
+    const fetchInitialLoc = async () => {
       try {
-        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        setCurrentLoc({ lat: location.coords.latitude, lng: location.coords.longitude });
-        
-        let reverse = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        });
-        if (reverse.length > 0) {
-          const r = reverse[0];
-          setCurrentLocName(r.name || r.street || r.city || 'Current Location');
-        } else {
-          setCurrentLocName('Current Location');
+        setIsGeocoding(true);
+        const ipResp = await fetch('http://ip-api.com/json/');
+        const ipData = await ipResp.json();
+        if (ipData && ipData.lat && ipData.lon) {
+          setCurrentLoc({ lat: ipData.lat, lng: ipData.lon });
+          setCurrentLocName(ipData.city || 'Guntur, AP');
         }
       } catch (e) {
-        setCurrentLocName('Current Location');
+        console.log('IP Location failed');
+      } finally {
+        setIsGeocoding(false);
       }
-    })();
+    };
+    fetchInitialLoc();
   }, []);
+
+  // Handle manual starting address change
+  const handleAddressSubmit = async (newAddress: string) => {
+    if (!newAddress.trim()) return;
+    const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+    if (!GOOGLE_KEY) return;
+    
+    setIsGeocoding(true);
+    try {
+      const geoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(newAddress)}&key=${GOOGLE_KEY}`);
+      const geoData = await geoResp.json();
+      if (geoData.status === 'OK' && geoData.results.length > 0) {
+        const { lat, lng } = geoData.results[0].geometry.location;
+        setCurrentLoc({ lat, lng });
+      }
+    } catch (e) {
+      console.log('Geocoding failed');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   useEffect(() => {
     const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
@@ -218,6 +230,27 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
             <Text style={styles.successText}>All travel timings align. No conflicts.</Text>
           </View>
         )}
+
+        <View style={styles.headerRow}>
+          <Text style={styles.pageTitle}>Route Plan</Text>
+          <TransportToggle mode={mode} onModeChange={setMode} />
+        </View>
+
+        <View style={{ backgroundColor: '#fff', padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, ...shadow.sm }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
+            STARTING FROM
+          </Text>
+          <TextInput
+            style={{ backgroundColor: colors.bgSecondary, padding: 12, borderRadius: radius.sm, fontSize: 16, color: colors.textPrimary }}
+            value={currentLocName}
+            onChangeText={setCurrentLocName}
+            onEndEditing={(e) => handleAddressSubmit(e.nativeEvent.text)}
+            placeholder="Type starting address..."
+          />
+          <Text style={{ fontSize: 11, color: colors.textTertiary, marginTop: 4 }}>
+            {isGeocoding ? 'Updating coordinates...' : 'Press Enter on keyboard to lock in your custom start location.'}
+          </Text>
+        </View>
 
         {/* Route Chain Visualizer */}
         <Text style={styles.sectionTitle}>Route Chain</Text>
