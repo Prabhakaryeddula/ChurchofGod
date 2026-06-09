@@ -10,12 +10,10 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
-  Platform,
-  PermissionsAndroid
+  Platform
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Geolocation from '@react-native-community/geolocation';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
@@ -101,20 +99,13 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       try {
         const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
         
-        let hasPerm = true;
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-          hasPerm = granted === PermissionsAndroid.RESULTS.GRANTED;
-        }
+        // Use IP-based location to avoid native module crashes in dev client
+        const ipResp = await fetch('http://ip-api.com/json/');
+        const ipData = await ipResp.json();
+        const latitude = ipData.lat;
+        const longitude = ipData.lon;
 
-        if (hasPerm && GOOGLE_KEY) {
-          const getPosition = () => new Promise<any>((resolve, reject) => {
-            Geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10000 });
-          });
-
-          const location = await getPosition();
-          const { latitude, longitude } = location.coords;
-
+        if (GOOGLE_KEY && latitude && longitude) {
           // Reverse geocode current location
           let currentLocationStr = 'Current Location';
           const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
@@ -129,7 +120,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
           
           if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
             const distElement = distData.rows[0].elements[0];
-            travelInfo = `\n\n--- Travel Estimation (From Current Location) ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
+            travelInfo = `\n\n--- Travel Estimation ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
           }
         }
       } catch (err) {
