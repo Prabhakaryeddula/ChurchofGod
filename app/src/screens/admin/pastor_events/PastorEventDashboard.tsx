@@ -78,10 +78,11 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     fetchEvents();
   }, []);
 
-  // Filter events based on tab OR selected date filter
-  const filteredEvents = selectedDateFilter
+  // Filter events based on tab OR selected date filter, and sort chronologically
+  const filteredEvents = (selectedDateFilter
     ? events.filter(evt => evt.date === selectedDateFilter)
-    : events.filter(evt => evt.section === activeTab);
+    : events.filter(evt => evt.section === activeTab)
+  ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
   const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
