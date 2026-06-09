@@ -27,6 +27,9 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
+  // Sort events by time to plan the route sequentially
+  const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
   // Initialize with IP-based or fallback location
   useEffect(() => {
     const fetchInitialLoc = async () => {
@@ -231,12 +234,12 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
           </View>
         )}
 
-        <View style={styles.headerRow}>
-          <Text style={styles.pageTitle}>Route Plan</Text>
-          <TransportToggle mode={mode} onModeChange={setMode} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md }}>
+          <Text style={styles.sectionTitle}>Route Plan</Text>
+          <TransportToggle value={mode} onChange={setMode} />
         </View>
 
-        <View style={{ backgroundColor: '#fff', padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, ...shadow.sm }}>
+        <View style={{ backgroundColor: '#fff', padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, elevation: 2 }}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
             STARTING FROM
           </Text>
