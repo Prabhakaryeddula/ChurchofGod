@@ -1693,7 +1693,16 @@ spfkUchVp71l4aWpCW50lro=
         const endDT = r.EndDateTime ? new Date(r.EndDateTime) : null;
         
         const dateStr = startDT ? startDT.toISOString().split('T')[0] : '';
-        const timeStr = startDT ? startDT.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }) : '12:00 AM';
+        let timeStr = '12:00 AM';
+        if (startDT) {
+          let h = startDT.getHours();
+          const m = startDT.getMinutes();
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          h = h ? h : 12;
+          const mStr = m < 10 ? '0' + m : m;
+          timeStr = `${h}:${mStr} ${ampm}`;
+        }
         const duration = startDT && endDT ? Math.round((endDT.getTime() - startDT.getTime()) / 60000) : 60;
         
         // Geocode the address to get lat/lng

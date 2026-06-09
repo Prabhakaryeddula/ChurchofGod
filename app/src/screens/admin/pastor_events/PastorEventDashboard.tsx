@@ -193,7 +193,7 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       <View style={styles.cardHeader}>
         <EventTypeBadge type={item.type} />
         <Text style={styles.timeText}>
-          {item.startTime} ({item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hrs` : `${item.durationMins} mins`})
+          {item.startTime} ({item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`})
         </Text>
       </View>
       
