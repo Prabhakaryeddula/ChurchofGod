@@ -204,14 +204,14 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       activeOpacity={0.9}
       onPress={() => navigation.navigate('EventDetail', { event: item, allEvents: events })}
     >
-      <View style={styles.cardHeader}>
-        <EventTypeBadge type={item.type} />
-        <Text style={styles.timeText}>
-          {item.startTime} ({item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`})
+      <Text style={[styles.titleText, { marginBottom: 6 }]}>{item.title}</Text>
+      
+      <View style={[styles.venueRow, { marginBottom: 6 }]}>
+        <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+        <Text style={[styles.timeText, { marginLeft: 4 }]}>
+          {item.date} • {item.startTime} ({item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`})
         </Text>
       </View>
-      
-      <Text style={styles.titleText}>{item.title}</Text>
       
       <View style={styles.venueRow}>
         <Ionicons name="business" size={14} color={colors.textTertiary} />
