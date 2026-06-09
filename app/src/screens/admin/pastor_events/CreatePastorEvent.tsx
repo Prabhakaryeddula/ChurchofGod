@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
@@ -78,20 +79,51 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
     setLoading(true);
 
     try {
-      // Calculate start and end date times
+      // Calculate start and end date times (defaulting event duration to 1 hour since we removed the manual duration field)
       const startDateTime = new Date(date);
       startDateTime.setHours(startTime.getHours());
       startDateTime.setMinutes(startTime.getMinutes());
       startDateTime.setSeconds(0);
       startDateTime.setMilliseconds(0);
 
-      const duration = parseInt(durationMins, 10) || 60;
-      const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000);
+      const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
 
       // Build full address with PIN code for geocoding
       const fullAddress = pinCode
         ? `${address.trim()}, ${pinCode.trim()}`
         : address.trim();
+
+      // --- Location & Distance Calculation ---
+      let travelInfo = '';
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const { latitude, longitude } = location.coords;
+          
+          const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+          if (GOOGLE_KEY) {
+            // Reverse geocode current location
+            let currentLocationStr = 'Current Location';
+            const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
+            const revGeoData = await revGeoResp.json();
+            if (revGeoData.status === 'OK' && revGeoData.results.length > 0) {
+              currentLocationStr = revGeoData.results[0].formatted_address;
+            }
+            
+            // Get Distance & Time
+            const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
+            const distData = await distResp.json();
+            
+            if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+              const distElement = distData.rows[0].elements[0];
+              travelInfo = `\n\n--- Travel Estimation ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Location calculation error:', err);
+      }
 
       // Construct Salesforce Event payload — only standard fields that definitely exist
       const payload: any = {
@@ -99,9 +131,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         StartDateTime: startDateTime.toISOString(),
         EndDateTime: endDateTime.toISOString(),
         Location: `${venue.trim()} — ${fullAddress}`,
-        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}`,
-        // Type is a picklist — only include if value matches org's picklist
-        // WhoId links to a Contact (required in some orgs, optional in others)
+        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}${travelInfo}`,
       };
 
       // Only add WhoId if we have a valid contact
@@ -205,16 +235,6 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
                 />
               )}
             </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Duration (Minutes)</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              value={durationMins}
-              onChangeText={setDurationMins}
-            />
           </View>
         </View>
 
