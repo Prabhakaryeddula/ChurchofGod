@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import { PastorEvent } from '../../../types/event';
 import SalesforceService from '../../../services/SalesforceService';
@@ -95,8 +96,19 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       try {
         let totalKm = 0;
         let totalMins = 0;
-        let prevLat = 16.3067; // Starting home base roughly (Guntur)
+        let prevLat = 16.3067; // Fallback
         let prevLng = 80.4365;
+
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            prevLat = location.coords.latitude;
+            prevLng = location.coords.longitude;
+          }
+        } catch (e) {
+          // Fallback to Guntur if location fails
+        }
 
         for (let i = 0; i < filteredEvents.length; i++) {
           const evt = filteredEvents[i];
