@@ -7,10 +7,13 @@ import {
   StyleSheet,
   SafeAreaView,
   Linking,
-  StatusBar
+  StatusBar,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
+import SalesforceService from '../../../services/SalesforceService';
 import { PastorEvent } from '../../../types/event';
 import { openInMaps } from '../../../utils/maps';
 import EventTypeBadge from '../../../components/EventTypeBadge';
@@ -18,6 +21,7 @@ import DistanceBadge from '../../../components/DistanceBadge';
 
 export const PastorEventDetail = ({ route, navigation }: { route: any; navigation: any }) => {
   const { event, allEvents = [] } = route.params as { event: PastorEvent; allEvents: PastorEvent[] };
+  const [deleting, setDeleting] = React.useState(false);
 
   // Format date nicely
   const formatDate = (dateStr: string) => {
@@ -57,6 +61,35 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
 
   const handleDirections = () => {
     openInMaps(event.lat || 0, event.lng || 0, event.title, event.address || event.venue);
+  };
+
+  const handleEdit = () => {
+    navigation.navigate('CreatePastorEvent', { editEvent: event });
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Event',
+      'Are you sure you want to permanently delete this event?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await SalesforceService.deletePastorEvent(event.id);
+              Alert.alert('Deleted', 'Event has been deleted.');
+              navigation.navigate('Dashboard');
+            } catch (err: any) {
+              Alert.alert('Delete Failed', err?.message || 'Could not delete event.');
+              setDeleting(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -197,8 +230,34 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
               <Text style={styles.plannerLinkText}>Open Route Itinerary</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </TouchableOpacity>
-          </View>
         )}
+
+        {/* Action Buttons */}
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+          <TouchableOpacity 
+            style={[styles.card, { flex: 1, alignItems: 'center', borderColor: colors.primary }]}
+            onPress={handleEdit}
+            disabled={deleting}
+          >
+            <Ionicons name="pencil" size={20} color={colors.primary} />
+            <Text style={{ marginTop: 4, fontWeight: '600', color: colors.primary }}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.card, { flex: 1, alignItems: 'center', borderColor: colors.error }]}
+            onPress={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <ActivityIndicator color={colors.error} size="small" />
+            ) : (
+              <>
+                <Ionicons name="trash" size={20} color={colors.error} />
+                <Text style={{ marginTop: 4, fontWeight: '600', color: colors.error }}>Delete</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

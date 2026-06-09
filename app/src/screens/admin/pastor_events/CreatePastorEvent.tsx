@@ -18,7 +18,7 @@ import { colors, spacing, radius, typography, shadow } from '../../../theme/Them
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
 
-export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
+export const CreatePastorEvent = ({ route, navigation }: { route: any; navigation: any }) => {
   const { member } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fallbackContactId, setFallbackContactId] = useState<string | null>(null);
@@ -38,6 +38,44 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
   // UI state for Pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const editEvent = route?.params?.editEvent;
+
+  useEffect(() => {
+    if (editEvent) {
+      setTitle(editEvent.title || '');
+      setEventType(editEvent.type === 'worship' ? '' : editEvent.type);
+      
+      if (editEvent.date) setDate(new Date(editEvent.date));
+      
+      if (editEvent.startTime) {
+        const timeDate = new Date();
+        const [time, modifier] = editEvent.startTime.split(' ');
+        if (time && modifier) {
+          let [hours, minutes] = time.split(':');
+          let h = parseInt(hours, 10);
+          if (h === 12) h = 0;
+          if (modifier.toUpperCase() === 'PM') h += 12;
+          timeDate.setHours(h, parseInt(minutes || '0', 10), 0, 0);
+          setStartTime(timeDate);
+        }
+      }
+      
+      if (editEvent.durationMins) {
+        setDurationHours((editEvent.durationMins / 60).toString());
+      }
+      
+      setVenue(editEvent.venue || '');
+      
+      // Attempt to strip out the venue from the location string if it matches our pattern "Venue — Address"
+      let addr = editEvent.address || '';
+      if (editEvent.venue && addr.startsWith(`${editEvent.venue} — `)) {
+        addr = addr.substring(editEvent.venue.length + 3);
+      }
+      setAddress(addr);
+      setDescription(editEvent.description || '');
+    }
+  }, [editEvent]);
 
   useEffect(() => {
     // If not authenticated or member profile is missing, search Salesforce for an admin contact
@@ -111,8 +149,13 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
 
       const executeSave = async () => {
         try {
-          await SalesforceService.createPastorEvent(payload);
-          Alert.alert('✅ Success', 'Pastor event created successfully!');
+          if (editEvent) {
+            await SalesforceService.updatePastorEvent(editEvent.id, payload);
+            Alert.alert('✅ Success', 'Pastor event updated successfully!');
+          } else {
+            await SalesforceService.createPastorEvent(payload);
+            Alert.alert('✅ Success', 'Pastor event created successfully!');
+          }
           navigation.navigate('Dashboard');
         } catch (e: any) {
           const msg = e?.message || 'An unexpected error occurred.';
@@ -144,8 +187,8 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
           const targetDateStr = startDateTime.toISOString().split('T')[0];
           
           const sameDayEvents = existingEvents
-            .filter(e => e.date === targetDateStr)
-            .sort((a, b) => parseTime(a.startTime, startDateTime).getTime() - parseTime(b.startTime, startDateTime).getTime());
+            .filter((e: any) => e.date === targetDateStr && e.id !== editEvent?.id)
+            .sort((a: any, b: any) => parseTime(a.startTime, startDateTime).getTime() - parseTime(b.startTime, startDateTime).getTime());
 
           const newEventStartMs = startDateTime.getTime();
           
@@ -217,7 +260,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Pastor Event</Text>
+        <Text style={styles.headerTitle}>{editEvent ? 'Edit Pastor Event' : 'Create Pastor Event'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -382,7 +425,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
           ) : (
             <>
               <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
-              <Text style={styles.saveButtonText}>Create Event</Text>
+              <Text style={styles.saveButtonText}>{editEvent ? 'Update Event' : 'Create Event'}</Text>
             </>
           )}
         </TouchableOpacity>

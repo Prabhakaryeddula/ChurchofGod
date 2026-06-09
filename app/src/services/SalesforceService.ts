@@ -1765,7 +1765,59 @@ spfkUchVp71l4aWpCW50lro=
       throw e; // Re-throw so caller can show the real message
     }
   }
+  async updatePastorEvent(eventId: string, eventData: any): Promise<boolean> {
+    try {
+      const token = await this.getAccessToken();
+      console.log(`📤 [updatePastorEvent] Updating event ${eventId}:`, JSON.stringify(eventData, null, 2));
+      const response = await fetch(`${this.instanceUrl}/services/data/v60.0/sobjects/Event/${eventId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventData)
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('❌ [SalesforceService] updatePastorEvent Error response:', JSON.stringify(data));
+        const sfMessage = Array.isArray(data)
+          ? data.map((e: any) => e.message).join('\n')
+          : data?.message || JSON.stringify(data);
+        throw new Error(`Salesforce: ${sfMessage}`);
+      }
+      console.log('✅ [updatePastorEvent] Event updated successfully');
+      return true;
+    } catch (e: any) {
+      console.error('❌ [SalesforceService] updatePastorEvent Error:', e?.message || e);
+      throw e;
+    }
+  }
 
+  async deletePastorEvent(eventId: string): Promise<boolean> {
+    try {
+      const token = await this.getAccessToken();
+      console.log(`📤 [deletePastorEvent] Deleting event ${eventId}`);
+      const response = await fetch(`${this.instanceUrl}/services/data/v60.0/sobjects/Event/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('❌ [SalesforceService] deletePastorEvent Error response:', JSON.stringify(data));
+        const sfMessage = Array.isArray(data)
+          ? data.map((e: any) => e.message).join('\n')
+          : data?.message || JSON.stringify(data);
+        throw new Error(`Salesforce: ${sfMessage}`);
+      }
+      console.log('✅ [deletePastorEvent] Event deleted successfully');
+      return true;
+    } catch (e: any) {
+      console.error('❌ [SalesforceService] deletePastorEvent Error:', e?.message || e);
+      throw e;
+    }
+  }
 }
 
 export default new SalesforceService();
