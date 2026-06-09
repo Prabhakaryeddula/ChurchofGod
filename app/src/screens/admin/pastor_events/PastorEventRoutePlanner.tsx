@@ -28,8 +28,22 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
+  // Helper to convert "9:00 AM" or "1:00 PM" into a sortable minutes-since-midnight integer
+  const timeToMins = (timeStr: string) => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(' ');
+    if (parts.length < 2) return 0;
+    const [time, modifier] = parts;
+    let [hours, minutes] = time.split(':');
+    let h = parseInt(hours, 10);
+    let m = parseInt(minutes || '0', 10);
+    if (h === 12) h = 0;
+    if (modifier.toUpperCase() === 'PM') h += 12;
+    return h * 60 + m;
+  };
+
   // Sort events by time to plan the route sequentially
-  const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const sortedEvents = [...events].sort((a, b) => timeToMins(a.startTime) - timeToMins(b.startTime));
 
   // Initialize with saved location, then IP-based fallback if none saved
   useEffect(() => {
