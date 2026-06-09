@@ -71,7 +71,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
           <View style={styles.timeRow}>
             <Ionicons name="time-outline" size={18} color={colors.primary} />
             <Text style={styles.timeVal}>
-              Starts at {event.startTime}  |  Time Spent at Event: {event.durationMins} mins
+              Starts at {event.startTime}  |  Time Spent at Event: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
             </Text>
           </View>
         </View>
