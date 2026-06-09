@@ -12,7 +12,7 @@ export type PastorEventStackParamList = {
   EventDetail: { event: PastorEvent; allEvents: PastorEvent[] };
   RoutePlanner: { events: PastorEvent[] };
   EventMap: { events: PastorEvent[] };
-  CreateEvent: undefined;
+  CreateEvent: { editEvent?: PastorEvent } | undefined;
 };
 
 const Stack = createNativeStackNavigator<PastorEventStackParamList>();

@@ -64,7 +64,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
   };
 
   const handleEdit = () => {
-    navigation.navigate('CreatePastorEvent', { editEvent: event });
+    navigation.navigate('CreateEvent', { editEvent: event });
   };
 
   const handleDelete = () => {
