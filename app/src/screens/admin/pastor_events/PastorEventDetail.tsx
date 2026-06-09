@@ -61,17 +61,22 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Main Header Info Card */}
         <View style={styles.card}>
-          <View style={styles.badgeRow}>
-            <Text style={styles.dateText}>{formatDate(event.date)}</Text>
-          </View>
+          <Text style={[styles.mainTitle, { marginBottom: 16 }]}>{event.title}</Text>
 
-          <Text style={styles.mainTitle}>{event.title}</Text>
+          <View style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+              <Text style={[styles.timeVal, { marginLeft: 8 }]}>{formatDate(event.date)}</Text>
+            </View>
 
-          <View style={[styles.timeRow, { alignItems: 'flex-start' }]}>
-            <Ionicons name="time-outline" size={18} color={colors.primary} style={{ marginTop: 2 }} />
-            <View style={{ flex: 1, marginLeft: 4 }}>
-              <Text style={styles.timeVal}>Starts at {event.startTime}</Text>
-              <Text style={[styles.timeVal, { marginTop: 4, color: colors.textSecondary }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="time-outline" size={18} color={colors.primary} />
+              <Text style={[styles.timeVal, { marginLeft: 8 }]}>Starts at {event.startTime}</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="hourglass-outline" size={18} color={colors.primary} />
+              <Text style={[styles.timeVal, { marginLeft: 8, color: colors.textSecondary }]}>
                 Time Spent at Event: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
               </Text>
             </View>
