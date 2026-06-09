@@ -92,46 +92,13 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         ? `${address.trim()}, ${pinCode.trim()}`
         : address.trim();
 
-      // --- Location & Distance Calculation ---
-      let travelInfo = '';
-      try {
-        const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
-        
-        // Use IP-based location to avoid native module crashes in dev client
-        const ipResp = await fetch('http://ip-api.com/json/');
-        const ipData = await ipResp.json();
-        const latitude = ipData.lat;
-        const longitude = ipData.lon;
-        
-        if (GOOGLE_KEY && latitude && longitude) {
-          // Reverse geocode current location
-          let currentLocationStr = 'Current Location';
-          const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
-          const revGeoData = await revGeoResp.json();
-          if (revGeoData.status === 'OK' && revGeoData.results.length > 0) {
-            currentLocationStr = revGeoData.results[0].formatted_address;
-          }
-          
-          // Get Distance & Time
-          const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
-          const distData = await distResp.json();
-          
-          if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
-            const distElement = distData.rows[0].elements[0];
-            travelInfo = `\n\n--- Travel Estimation ---\nDistance: ${distElement.distance.text}\nTravel Time: ${distElement.duration.text}\nStarting From: ${currentLocationStr}`;
-          }
-        }
-      } catch (err) {
-        console.warn('Location calculation error:', err);
-      }
-
       // Construct Salesforce Event payload — only standard fields that definitely exist
       const payload: any = {
         Subject: title,
         StartDateTime: startDateTime.toISOString(),
         EndDateTime: endDateTime.toISOString(),
         Location: `${venue.trim()} — ${fullAddress}`,
-        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}${travelInfo}`,
+        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}`,
       };
 
       // Temporarily disabled WhoId because it causes "invalid cross reference id" 
@@ -142,11 +109,9 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
 
       await SalesforceService.createPastorEvent(payload);
 
-      Alert.alert(
-        '✅ Success',
-        'Pastor event created successfully in Salesforce!',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      Alert.alert('✅ Success', 'Pastor event created successfully!');
+      navigation.navigate('PastorEventDashboard');
+
     } catch (e: any) {
       const msg = e?.message || 'An unexpected error occurred.';
       console.error('❌ [CreatePastorEvent] Save failed:', msg);

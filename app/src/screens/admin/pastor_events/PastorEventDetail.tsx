@@ -71,20 +71,44 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
           <View style={styles.timeRow}>
             <Ionicons name="time-outline" size={18} color={colors.primary} />
             <Text style={styles.timeVal}>
-              {event.startTime} · {event.durationMins} mins
+              Starts at {event.startTime}  |  Duration: {event.durationMins} mins
             </Text>
           </View>
         </View>
 
         {/* Travel Info Card if present */}
         {event.travel && event.travel.distKm > 0 && (
-          <View style={[styles.card, styles.travelCard]}>
-            <Ionicons name="car" size={24} color={colors.primary} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sectionLabel}>Travel from previous location</Text>
-              <Text style={styles.travelText}>
-                {event.travel.distKm.toFixed(1)} km away. Car: {event.travel.car}m · Bike: {event.travel.bike}m · Walk: {event.travel.walk}m
+          <View style={[styles.card, { borderColor: colors.primaryMid }]}>
+            <Text style={styles.cardLabel}>Travel Estimates from previous stop</Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
+              <Ionicons name="map-outline" size={18} color={colors.textSecondary} />
+              <Text style={{ fontSize: 15, fontWeight: '700', marginLeft: 8, color: colors.textPrimary }}>
+                Distance: {event.travel.distKm.toFixed(1)} km
               </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.bgSecondary, padding: 12, borderRadius: radius.sm }}>
+              <View style={{ alignItems: 'center' }}>
+                <Ionicons name="car" size={24} color={colors.primary} />
+                <Text style={{ fontSize: 13, fontWeight: '700', marginTop: 4, color: colors.textPrimary }}>{event.travel.car}m</Text>
+                <Text style={{ fontSize: 10, color: colors.textTertiary, textTransform: 'uppercase' }}>Car</Text>
+              </View>
+              <View style={{ alignItems: 'center' }}>
+                <Ionicons name="bicycle" size={24} color={colors.primary} />
+                <Text style={{ fontSize: 13, fontWeight: '700', marginTop: 4, color: colors.textPrimary }}>{event.travel.bike}m</Text>
+                <Text style={{ fontSize: 10, color: colors.textTertiary, textTransform: 'uppercase' }}>Bike</Text>
+              </View>
+              <View style={{ alignItems: 'center' }}>
+                <Ionicons name="bus" size={24} color={colors.primary} />
+                <Text style={{ fontSize: 13, fontWeight: '700', marginTop: 4, color: colors.textPrimary }}>{Math.round(event.travel.car * 1.5)}m</Text>
+                <Text style={{ fontSize: 10, color: colors.textTertiary, textTransform: 'uppercase' }}>Bus</Text>
+              </View>
+              <View style={{ alignItems: 'center' }}>
+                <Ionicons name="walk" size={24} color={colors.primary} />
+                <Text style={{ fontSize: 13, fontWeight: '700', marginTop: 4, color: colors.textPrimary }}>{event.travel.walk}m</Text>
+                <Text style={{ fontSize: 10, color: colors.textTertiary, textTransform: 'uppercase' }}>Walk</Text>
+              </View>
             </View>
           </View>
         )}

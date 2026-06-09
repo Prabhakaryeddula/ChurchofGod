@@ -37,7 +37,12 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       const sfEvents = await SalesforceService.getPastorEvents();
       if (sfEvents && sfEvents.length > 0) {
         // Categorize into today, upcoming, past
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+
         const categorized = sfEvents.map(evt => {
           let section: 'today' | 'upcoming' | 'past' = 'upcoming';
           if (evt.date === todayStr) {
