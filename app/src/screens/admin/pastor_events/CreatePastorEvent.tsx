@@ -8,12 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
-  StatusBar,
   Alert
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Geolocation from '@react-native-community/geolocation';
 import { colors, spacing, radius, typography, shadow } from '../../../theme/Theme';
 import SalesforceService from '../../../services/SalesforceService';
 import { useAuth } from '../../../context/AuthContext';
@@ -98,15 +96,13 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       try {
         const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
         
-        // Wrap Geolocation in a Promise
-        const getPosition = () => new Promise<any>((resolve, reject) => {
-          Geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
-        });
-
-        const location = await getPosition();
-        const { latitude, longitude } = location.coords;
+        // Use IP-based location to avoid native module crashes in dev client
+        const ipResp = await fetch('http://ip-api.com/json/');
+        const ipData = await ipResp.json();
+        const latitude = ipData.lat;
+        const longitude = ipData.lon;
         
-        if (GOOGLE_KEY) {
+        if (GOOGLE_KEY && latitude && longitude) {
           // Reverse geocode current location
           let currentLocationStr = 'Current Location';
           const revGeoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`);
