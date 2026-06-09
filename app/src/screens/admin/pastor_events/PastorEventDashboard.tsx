@@ -225,9 +225,20 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         </View>
       </View>
       
-      <View style={styles.addressRow}>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: colors.bgTertiary,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: radius.md,
+        marginTop: 4
+      }}>
         <Ionicons name="map-outline" size={14} color={colors.primary} />
-        <Text style={[styles.addressText, { fontStyle: 'italic', color: colors.primary }]} numberOfLines={1}>Click here to know the location</Text>
+        <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: '600', color: colors.primary }}>
+          Click here to know the location
+        </Text>
       </View>
 
       {item.travel && item.travel.distKm > 0 && (
