@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors, spacing, radius, typography, shadow } from '../theme/Theme';
 
@@ -15,7 +15,7 @@ interface CustomAlertProps {
   message: string;
   type?: 'success' | 'error' | 'warning' | 'info';
   buttons?: AlertButton[];
-  onClose?: () => void; // Fallback close
+  onClose?: () => void;
 }
 
 export const CustomAlert = ({
@@ -27,12 +27,36 @@ export const CustomAlert = ({
   onClose
 }: CustomAlertProps) => {
 
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      scaleAnim.setValue(0.8);
+      fadeAnim.setValue(0);
+    }
+  }, [visible]);
+
   const getIcon = () => {
     switch (type) {
-      case 'success': return <Ionicons name="checkmark-circle" size={48} color={colors.primary} />;
-      case 'error': return <Ionicons name="close-circle" size={48} color={colors.error} />;
-      case 'warning': return <Ionicons name="warning" size={48} color={colors.warning} />;
-      default: return <Ionicons name="information-circle" size={48} color={colors.primary} />;
+      case 'success': return <Ionicons name="checkmark-circle" size={56} color={colors.primary} />;
+      case 'error': return <Ionicons name="close-circle" size={56} color={colors.error} />;
+      case 'warning': return <Ionicons name="warning" size={56} color={colors.warning} />;
+      default: return <Ionicons name="information-circle" size={56} color={colors.primary} />;
     }
   };
 
@@ -49,11 +73,11 @@ export const CustomAlert = ({
     <Modal
       transparent={true}
       visible={visible}
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.alertBox}>
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.alertBox, { transform: [{ scale: scaleAnim }] }]}>
           
           <View style={styles.iconContainer}>
             {getIcon()}
@@ -77,6 +101,7 @@ export const CustomAlert = ({
                     if (btn.onPress) btn.onPress();
                     if (onClose && !btn.onPress) onClose();
                   }}
+                  activeOpacity={0.8}
                 >
                   <Text style={[
                     styles.buttonText,
@@ -88,14 +113,14 @@ export const CustomAlert = ({
                 </TouchableOpacity>
               ))
             ) : (
-              <TouchableOpacity style={styles.button} onPress={onClose}>
+              <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.8}>
                 <Text style={styles.buttonText}>OK</Text>
               </TouchableOpacity>
             )}
           </View>
 
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -105,7 +130,7 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl
@@ -113,25 +138,35 @@ const styles = StyleSheet.create({
   alertBox: {
     width: width - spacing.xl * 2,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     alignItems: 'center',
-    ...shadow.card
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   iconContainer: {
-    marginBottom: spacing.sm
+    marginBottom: spacing.md,
+    backgroundColor: '#F5F7FA',
+    padding: 12,
+    borderRadius: 100,
   },
   title: {
     ...typography.h2,
     marginBottom: spacing.sm,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '800'
   },
   message: {
     ...typography.body,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.lg,
-    lineHeight: 22
+    marginBottom: spacing.xl,
+    lineHeight: 24,
+    fontSize: 15
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -142,26 +177,34 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: radius.md,
+    paddingVertical: 14,
+    borderRadius: 100, // Pill shape
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4
   },
   buttonHalf: {
     flex: 1
   },
   buttonCancel: {
-    backgroundColor: colors.bgSecondary,
-    borderWidth: 1,
-    borderColor: colors.border
+    backgroundColor: '#F3F4F6',
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0
   },
   buttonDestructive: {
-    backgroundColor: colors.error
+    backgroundColor: colors.error,
+    shadowColor: colors.error,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '700'
+    fontWeight: '700',
+    letterSpacing: 0.5
   },
   buttonTextCancel: {
     color: colors.textPrimary
