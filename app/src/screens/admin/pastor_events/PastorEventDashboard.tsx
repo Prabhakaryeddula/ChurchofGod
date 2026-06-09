@@ -204,13 +204,25 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       activeOpacity={0.9}
       onPress={() => navigation.navigate('EventDetail', { event: item, allEvents: events })}
     >
-      <Text style={[styles.titleText, { marginBottom: 6 }]}>{item.title}</Text>
+      <Text style={[styles.titleText, { marginBottom: 12 }]}>{item.title}</Text>
       
-      <View style={[styles.venueRow, { marginBottom: 6 }]}>
-        <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-        <Text style={[styles.timeText, { marginLeft: 4 }]}>
-          {item.date} • {item.startTime} ({item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`})
-        </Text>
+      <View style={{ gap: 6, marginBottom: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+          <Text style={[styles.timeText, { marginLeft: 6 }]}>{item.date}</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="time-outline" size={14} color={colors.primary} />
+          <Text style={[styles.timeText, { marginLeft: 6 }]}>Starts at {item.startTime}</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="hourglass-outline" size={14} color={colors.primary} />
+          <Text style={[styles.timeText, { marginLeft: 6, color: colors.textTertiary }]}>
+            Time Spent at Event: {item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`}
+          </Text>
+        </View>
       </View>
       
       <View style={styles.venueRow}>
@@ -218,10 +230,12 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         <Text style={styles.venueText} numberOfLines={1}>{item.venue}</Text>
       </View>
 
-      <View style={styles.addressRow}>
-        <Ionicons name="map-outline" size={14} color={colors.textTertiary} />
-        <Text style={styles.addressText} numberOfLines={1}>{item.address}</Text>
-      </View>
+      {item.address && item.address !== item.venue && (
+        <View style={styles.addressRow}>
+          <Ionicons name="map-outline" size={14} color={colors.textTertiary} />
+          <Text style={styles.addressText} numberOfLines={1}>{item.address}</Text>
+        </View>
+      )}
 
       {item.travel && item.travel.distKm > 0 && (
         <View style={styles.travelContainer}>
