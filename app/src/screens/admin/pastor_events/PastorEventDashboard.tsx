@@ -18,6 +18,8 @@ import SalesforceService from '../../../services/SalesforceService';
 import EventTypeBadge from '../../../components/EventTypeBadge';
 import DistanceBadge from '../../../components/DistanceBadge';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 // No hardcoded events fallbacks
 
 export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
@@ -58,9 +60,11 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEvents();
+    }, [])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
