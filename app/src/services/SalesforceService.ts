@@ -1732,6 +1732,7 @@ spfkUchVp71l4aWpCW50lro=
   async createPastorEvent(eventData: any): Promise<boolean> {
     try {
       const token = await this.getAccessToken();
+      console.log('📤 [createPastorEvent] Sending payload:', JSON.stringify(eventData, null, 2));
       const response = await fetch(`${this.instanceUrl}/services/data/v60.0/sobjects/Event`, {
         method: 'POST',
         headers: {
@@ -1742,13 +1743,18 @@ spfkUchVp71l4aWpCW50lro=
       });
       if (!response.ok) {
         const data = await response.json();
-        console.error('❌ [SalesforceService] createPastorEvent Error response:', data);
-        return false;
+        console.error('❌ [SalesforceService] createPastorEvent Error response:', JSON.stringify(data));
+        // Throw the actual Salesforce error so the UI can display it
+        const sfMessage = Array.isArray(data)
+          ? data.map((e: any) => e.message).join('\n')
+          : data?.message || JSON.stringify(data);
+        throw new Error(`Salesforce: ${sfMessage}`);
       }
+      console.log('✅ [createPastorEvent] Event created successfully');
       return true;
-    } catch (e) {
-      console.error('❌ [SalesforceService] createPastorEvent Connection Error:', e);
-      return false;
+    } catch (e: any) {
+      console.error('❌ [SalesforceService] createPastorEvent Error:', e?.message || e);
+      throw e; // Re-throw so caller can show the real message
     }
   }
 

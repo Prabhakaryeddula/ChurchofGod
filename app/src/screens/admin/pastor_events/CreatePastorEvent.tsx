@@ -102,30 +102,33 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         ? `${address.trim()}, ${pinCode.trim()}`
         : address.trim();
 
-      // Construct Salesforce Event payload — only standard + existing custom fields
+      // Construct Salesforce Event payload — only standard fields that definitely exist
       const payload: any = {
         Subject: title,
         StartDateTime: startDateTime.toISOString(),
         EndDateTime: endDateTime.toISOString(),
         Location: `${venue.trim()} — ${fullAddress}`,
         Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}`,
-        WhoId: targetContactId, // Link to Contact record
-        Type: eventType
+        // Type is a picklist — only include if value matches org's picklist
+        // WhoId links to a Contact (required in some orgs, optional in others)
       };
 
-      const success = await SalesforceService.createPastorEvent(payload);
-      
-      if (success) {
-        Alert.alert(
-          'Success', 
-          'Pastor event created successfully under your contact record in Salesforce!',
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-      } else {
-        Alert.alert('Error', 'Failed to save event to Salesforce. Please try again.');
+      // Only add WhoId if we have a valid contact
+      if (targetContactId) {
+        payload.WhoId = targetContactId;
       }
+
+      await SalesforceService.createPastorEvent(payload);
+
+      Alert.alert(
+        '✅ Success',
+        'Pastor event created successfully in Salesforce!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'An unexpected error occurred.');
+      const msg = e?.message || 'An unexpected error occurred.';
+      console.error('❌ [CreatePastorEvent] Save failed:', msg);
+      Alert.alert('Save Failed', msg);
     } finally {
       setLoading(false);
     }
