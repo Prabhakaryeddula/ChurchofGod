@@ -30,16 +30,9 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
   const [durationMins, setDurationMins] = useState('60');
   const [venue, setVenue] = useState('');
   const [address, setAddress] = useState('');
+  const [pinCode, setPinCode] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
-
-  // Advanced / Travel Info State
-  const [lat, setLat] = useState('16.3067');
-  const [lng, setLng] = useState('80.4365');
-  const [distKm, setDistKm] = useState('3.5');
-  const [carMins, setCarMins] = useState('12');
-  const [bikeMins, setBikeMins] = useState('8');
-  const [walkMins, setWalkMins] = useState('45');
 
   // UI state for Pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -104,22 +97,20 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       const duration = parseInt(durationMins, 10) || 60;
       const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000);
 
-      // Construct Salesforce Event payload
-      const payload = {
+      // Build full address with PIN code for geocoding
+      const fullAddress = pinCode
+        ? `${address.trim()}, ${pinCode.trim()}`
+        : address.trim();
+
+      // Construct Salesforce Event payload — only standard + existing custom fields
+      const payload: any = {
         Subject: title,
         StartDateTime: startDateTime.toISOString(),
         EndDateTime: endDateTime.toISOString(),
-        Location: address.trim(),
-        Description: description.trim(),
+        Location: `${venue.trim()} — ${fullAddress}`,
+        Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}`,
         WhoId: targetContactId, // Link to Contact record
-        Event_Type__c: eventType,
-        Notes__c: notes.trim(),
-        Latitude__c: parseFloat(lat) || 0,
-        Longitude__c: parseFloat(lng) || 0,
-        Distance_Km__c: parseFloat(distKm) || 0,
-        Travel_Car_Mins__c: parseInt(carMins, 10) || 0,
-        Travel_Bike_Mins__c: parseInt(bikeMins, 10) || 0,
-        Travel_Walk_Mins__c: parseInt(walkMins, 10) || 0
+        Type: eventType
       };
 
       const success = await SalesforceService.createPastorEvent(payload);
@@ -278,72 +269,23 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
             />
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Latitude</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="decimal-pad"
-                value={lat}
-                onChangeText={setLat}
-              />
-            </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
-              <Text style={styles.label}>Longitude</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="decimal-pad"
-                value={lng}
-                onChangeText={setLng}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Travel Information Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Travel Estimations (Route Planner)</Text>
-
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Distance (km)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="decimal-pad"
-                value={distKm}
-                onChangeText={setDistKm}
-              />
-            </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
-              <Text style={styles.label}>Car (mins)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="number-pad"
-                value={carMins}
-                onChangeText={setCarMins}
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>PIN Code (improves map accuracy)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 522002"
+              keyboardType="numeric"
+              maxLength={10}
+              value={pinCode}
+              onChangeText={setPinCode}
+            />
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Bike (mins)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="number-pad"
-                value={bikeMins}
-                onChangeText={setBikeMins}
-              />
-            </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
-              <Text style={styles.label}>Walk (mins)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="number-pad"
-                value={walkMins}
-                onChangeText={setWalkMins}
-              />
-            </View>
+          <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f0fdf4', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#bbf7d0' }]}>
+            <Ionicons name="location" size={14} color="#15803D" />
+            <Text style={{ fontSize: 11, color: '#15803D', fontWeight: '500', flex: 1 }}>
+              Latitude, Longitude &amp; Travel times are auto-computed from the address — no manual entry needed.
+            </Text>
           </View>
         </View>
 

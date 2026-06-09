@@ -1662,10 +1662,33 @@ spfkUchVp71l4aWpCW50lro=
 
   async getPastorEvents(): Promise<any[]> {
     try {
-      const soql = `SELECT Id, Subject, StartDateTime, EndDateTime, Description, Location, Event_Type__c, Latitude__c, Longitude__c, Notes__c, Distance_Km__c, Travel_Car_Mins__c, Travel_Bike_Mins__c, Travel_Walk_Mins__c FROM Event WHERE StartDateTime >= 2026-01-01T00:00:00Z ORDER BY StartDateTime ASC LIMIT 200`;
-      const result = await this.query(soql, true);
+      const soql = `SELECT Id, Subject, StartDateTime, EndDateTime, Description, Location, Type, Address__c FROM Event WHERE StartDateTime >= 2026-01-01T00:00:00Z ORDER BY StartDateTime ASC LIMIT 200`;
+      const result = await this.query(soql, true).catch(async () => {
+        // Fallback: Address__c might not exist yet
+        const fallbackSoql = `SELECT Id, Subject, StartDateTime, EndDateTime, Description, Location, Type FROM Event WHERE StartDateTime >= 2026-01-01T00:00:00Z ORDER BY StartDateTime ASC LIMIT 200`;
+        return await this.query(fallbackSoql);
+      });
       const records = result.records || [];
-      return records.map((r: any) => {
+
+      // Auto-geocode each event's location in background
+      const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+      const geocode = async (address: string) => {
+        if (!address || !GOOGLE_KEY) return { lat: 0, lng: 0 };
+        try {
+          const resp = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_KEY}`
+          );
+          const data = await resp.json();
+          if (data.status === 'OK' && data.results?.length > 0) {
+            return data.results[0].geometry.location;
+          }
+        } catch (err) {
+          console.warn('⚠️ [getPastorEvents] Geocode failed for:', address);
+        }
+        return { lat: 0, lng: 0 };
+      };
+
+      const events = await Promise.all(records.map(async (r: any) => {
         const startDT = r.StartDateTime ? new Date(r.StartDateTime) : null;
         const endDT = r.EndDateTime ? new Date(r.EndDateTime) : null;
         
@@ -1673,27 +1696,33 @@ spfkUchVp71l4aWpCW50lro=
         const timeStr = startDT ? startDT.toTimeString().substring(0, 5) : '00:00';
         const duration = startDT && endDT ? Math.round((endDT.getTime() - startDT.getTime()) / 60000) : 60;
         
+        // Geocode the address to get lat/lng
+        const fullAddress = r.Address__c || r.Location || '';
+        const coords = await geocode(fullAddress);
+
         return {
           id: r.Id,
           title: r.Subject || 'Pastor Event',
-          type: (r.Event_Type__c || 'worship').toLowerCase(),
+          type: (r.Type || 'worship').toLowerCase(),
           date: dateStr,
           startTime: timeStr,
           durationMins: duration,
           venue: r.Location || '',
-          address: r.Location || '',
-          lat: r.Latitude__c || 0,
-          lng: r.Longitude__c || 0,
+          address: fullAddress,
+          lat: coords.lat || 0,
+          lng: coords.lng || 0,
           description: r.Description || '',
-          notes: r.Notes__c || '',
+          notes: '',
           travel: {
-            distKm: r.Distance_Km__c || 0,
-            car: r.Travel_Car_Mins__c || 0,
-            bike: r.Travel_Bike_Mins__c || 0,
-            walk: r.Travel_Walk_Mins__c || 0
+            distKm: 0,
+            car: 0,
+            bike: 0,
+            walk: 0
           }
         };
-      });
+      }));
+
+      return events;
     } catch (e) {
       console.error('❌ [SalesforceService] getPastorEvents Error:', e);
       return [];
