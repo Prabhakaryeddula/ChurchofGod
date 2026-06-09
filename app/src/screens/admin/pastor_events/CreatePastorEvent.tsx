@@ -134,10 +134,11 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
         Description: `${description.trim()}${notes.trim() ? `\n\nNotes: ${notes.trim()}` : ''}${travelInfo}`,
       };
 
-      // Only add WhoId if we have a valid contact
-      if (targetContactId) {
-        payload.WhoId = targetContactId;
-      }
+      // Temporarily disabled WhoId because it causes "invalid cross reference id" 
+      // if the authenticated user doesn't have access to the Contact record or if the ID is wrong.
+      // if (targetContactId) {
+      //   payload.WhoId = targetContactId;
+      // }
 
       await SalesforceService.createPastorEvent(payload);
 
