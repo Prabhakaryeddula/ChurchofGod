@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
+  StatusBar,
   Alert
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
