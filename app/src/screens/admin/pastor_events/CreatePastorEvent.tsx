@@ -196,6 +196,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
                   value={startTime}
                   mode="time"
                   display="default"
+                  is24Hour={false}
                   onChange={(event, selectedTime) => {
                     setShowTimePicker(false);
                     if (selectedTime) setStartTime(selectedTime);
