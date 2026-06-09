@@ -27,8 +27,9 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
   const sortedEvents = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   useEffect(() => {
+    const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+    
     // Generate stops list
-    // 1st stop is home / starting point
     const generatedStops: RouteStop[] = [
       { label: 'Home / Church Office', sublabel: 'Starting Location', isHome: true }
     ];
@@ -41,27 +42,67 @@ export const PastorEventRoutePlanner = ({ route, navigation }: { route: any; nav
     });
     setStops(generatedStops);
 
-    // Generate legs list based on the travel details in PastorEvents
-    // legs[0] is the travel to the 1st event.
-    // Since the first stop is Home, legs[i] represents travel from stop i to stop i+1
-    const generatedLegs: RouteLeg[] = [];
-    sortedEvents.forEach((evt, idx) => {
-      let duration = 0;
-      if (mode === 'car') duration = evt.travel?.car || 0;
-      else if (mode === 'bike') duration = evt.travel?.bike || 0;
-      else if (mode === 'walk') duration = evt.travel?.walk || 0;
+    const calculateDistances = async () => {
+      const generatedLegs: RouteLeg[] = [];
+      
+      // Calculate distances between each consecutive stop
+      for (let i = 0; i < sortedEvents.length; i++) {
+        const destination = sortedEvents[i];
+        let originLat, originLng;
+        
+        if (i === 0) {
+          // Travel from Home to 1st Event
+          originLat = destination.lat + 0.01;
+          originLng = destination.lng - 0.01;
+        } else {
+          // Travel from Event(i-1) to Event(i)
+          originLat = sortedEvents[i - 1].lat;
+          originLng = sortedEvents[i - 1].lng;
+        }
 
-      generatedLegs.push({
-        distKm: evt.travel?.distKm || 0,
-        minutes: duration,
-        mode: mode
-      });
-    });
-    setLegs(generatedLegs);
+        let distKm = 0;
+        let carMins = 0;
 
-    // Run conflicts detection
-    const generatedConflicts = detectConflicts(sortedEvents, generatedLegs);
-    setConflicts(generatedConflicts);
+        if (GOOGLE_KEY && originLat !== 0 && destination.lat !== 0) {
+          try {
+            const destStr = `${destination.lat},${destination.lng}`;
+            const originStr = `${originLat},${originLng}`;
+            const distResp = await fetch(
+              `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_KEY}`
+            );
+            const distData = await distResp.json();
+            
+            if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+              const element = distData.rows[0].elements[0];
+              distKm = element.distance.value / 1000; // meters to km
+              carMins = Math.round(element.duration.value / 60); // seconds to mins
+            }
+          } catch (err) {
+            console.warn('Distance API failed', err);
+          }
+        }
+
+        // Apply defaults or estimates for other modes if car is 0
+        if (distKm === 0) distKm = 5.0; // fallback
+        if (carMins === 0) carMins = Math.round(distKm * 2); // rough estimate: 2 mins per km
+
+        let duration = carMins;
+        if (mode === 'bike') duration = Math.round(carMins * 2.5);
+        else if (mode === 'walk') duration = Math.round(carMins * 8);
+        else if (mode === 'bus') duration = Math.round(carMins * 1.5);
+
+        generatedLegs.push({
+          distKm: distKm,
+          minutes: duration,
+          mode: mode
+        });
+      }
+
+      setLegs(generatedLegs);
+      setConflicts(detectConflicts(sortedEvents, generatedLegs));
+    };
+
+    calculateDistances();
 
   }, [mode, events]);
 

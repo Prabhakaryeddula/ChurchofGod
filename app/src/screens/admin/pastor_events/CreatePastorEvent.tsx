@@ -110,7 +110,7 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       await SalesforceService.createPastorEvent(payload);
 
       Alert.alert('✅ Success', 'Pastor event created successfully!');
-      navigation.navigate('PastorEventDashboard');
+      navigation.navigate('Dashboard');
 
     } catch (e: any) {
       const msg = e?.message || 'An unexpected error occurred.';
