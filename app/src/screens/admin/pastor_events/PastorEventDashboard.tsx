@@ -78,11 +78,25 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     fetchEvents();
   }, []);
 
+  // Helper to convert "9:00 AM" or "1:00 PM" into a sortable minutes-since-midnight integer
+  const timeToMins = (timeStr: string) => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(' ');
+    if (parts.length < 2) return 0;
+    const [time, modifier] = parts;
+    let [hours, minutes] = time.split(':');
+    let h = parseInt(hours, 10);
+    let m = parseInt(minutes || '0', 10);
+    if (h === 12) h = 0;
+    if (modifier.toUpperCase() === 'PM') h += 12;
+    return h * 60 + m;
+  };
+
   // Filter events based on tab OR selected date filter, and sort chronologically
   const filteredEvents = (selectedDateFilter
     ? events.filter(evt => evt.date === selectedDateFilter)
     : events.filter(evt => evt.section === activeTab)
-  ).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  ).sort((a, b) => timeToMins(a.startTime) - timeToMins(b.startTime));
 
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
   const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
