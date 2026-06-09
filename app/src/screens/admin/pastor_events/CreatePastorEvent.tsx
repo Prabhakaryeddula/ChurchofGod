@@ -109,16 +109,101 @@ export const CreatePastorEvent = ({ navigation }: { navigation: any }) => {
       //   payload.WhoId = targetContactId;
       // }
 
-      await SalesforceService.createPastorEvent(payload);
+      const executeSave = async () => {
+        try {
+          await SalesforceService.createPastorEvent(payload);
+          Alert.alert('✅ Success', 'Pastor event created successfully!');
+          navigation.navigate('Dashboard');
+        } catch (e: any) {
+          const msg = e?.message || 'An unexpected error occurred.';
+          console.error('❌ [CreatePastorEvent] Save failed:', msg);
+          Alert.alert('Save Failed', msg);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-      Alert.alert('✅ Success', 'Pastor event created successfully!');
-      navigation.navigate('Dashboard');
+      // --- Schedule Conflict Detection Logic ---
+      try {
+        const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+        if (GOOGLE_KEY) {
+          const existingEvents = await SalesforceService.getPastorEvents();
+          
+          // Helper to parse the 12-hour AM/PM string into a comparable Date
+          const parseTime = (timeStr: string, dateObj: Date) => {
+            const [time, modifier] = timeStr.split(' ');
+            let [hours, minutes] = time.split(':');
+            let h = parseInt(hours, 10);
+            if (h === 12) h = 0;
+            if (modifier === 'PM') h += 12;
+            const d = new Date(dateObj);
+            d.setHours(h, parseInt(minutes, 10), 0, 0);
+            return d;
+          };
+
+          const targetDateStr = startDateTime.toISOString().split('T')[0];
+          
+          const sameDayEvents = existingEvents
+            .filter(e => e.date === targetDateStr)
+            .sort((a, b) => parseTime(a.startTime, startDateTime).getTime() - parseTime(b.startTime, startDateTime).getTime());
+
+          const newEventStartMs = startDateTime.getTime();
+          
+          // Find the event that happens immediately BEFORE this new event
+          const prevEvents = sameDayEvents.filter(e => parseTime(e.startTime, startDateTime).getTime() < newEventStartMs);
+          
+          if (prevEvents.length > 0) {
+            const prevEvent = prevEvents[prevEvents.length - 1];
+
+            // Get lat/lng of the NEW event
+            const geoResp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_KEY}`);
+            const geoData = await geoResp.json();
+            
+            if (geoData.status === 'OK' && geoData.results.length > 0) {
+              const newLat = geoData.results[0].geometry.location.lat;
+              const newLng = geoData.results[0].geometry.location.lng;
+
+              if (newLat && newLng && prevEvent.lat && prevEvent.lng) {
+                const origins = `${prevEvent.lat},${prevEvent.lng}`;
+                const destinations = `${newLat},${newLng}`;
+                const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&key=${GOOGLE_KEY}`);
+                const distData = await distResp.json();
+
+                if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+                  const travelTimeSeconds = distData.rows[0].elements[0].duration.value;
+                  const travelTimeMins = Math.round(travelTimeSeconds / 60);
+                  
+                  const prevStartTimeMs = parseTime(prevEvent.startTime, startDateTime).getTime();
+                  const prevEndTimeMs = prevStartTimeMs + (prevEvent.durationMins * 60000);
+                  
+                  const requiredArrivalTimeMs = prevEndTimeMs + (travelTimeMins * 60000);
+                  
+                  if (requiredArrivalTimeMs > newEventStartMs) {
+                    Alert.alert(
+                      'Schedule Conflict Detected',
+                      `Insufficient travel time between your previous stop (${prevEvent.title}) and this new location.\n\nEstimated travel time is ${travelTimeMins >= 60 ? `${Math.round(travelTimeMins / 60 * 10) / 10} hours` : `${travelTimeMins} minutes`}.`,
+                      [
+                        { text: 'Cancel', style: 'cancel', onPress: () => setLoading(false) },
+                        { text: 'Proceed Anyway', onPress: () => executeSave() }
+                      ]
+                    );
+                    return; // Pause here!
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Conflict detection failed, proceeding with save.', err);
+      }
+
+      await executeSave();
 
     } catch (e: any) {
       const msg = e?.message || 'An unexpected error occurred.';
-      console.error('❌ [CreatePastorEvent] Save failed:', msg);
+      console.error('❌ [CreatePastorEvent] Pre-save failed:', msg);
       Alert.alert('Save Failed', msg);
-    } finally {
       setLoading(false);
     }
   };

@@ -135,8 +135,9 @@ const MockMapView = React.forwardRef(({
           <TouchableOpacity
             key={evt.id}
             style={[
-              styles.mockMarker,
+              styles.numberedMarker,
               {
+                position: 'absolute',
                 left: x - 18,
                 top: y - 18,
                 backgroundColor: color,
@@ -145,14 +146,11 @@ const MockMapView = React.forwardRef(({
                 transform: [{ scale: isSelected ? 1.25 : 1 }],
                 elevation: isSelected ? 8 : 3,
                 shadowColor: isSelected ? '#000' : 'transparent',
-                shadowOpacity: 0.3,
-                shadowRadius: 3,
-                shadowOffset: { width: 0, height: 2 }
               }
             ]}
             onPress={() => onMarkerPress(evt, idx)}
           >
-            <Text style={styles.mockMarkerText}>{idx + 1}</Text>
+            <Text style={styles.numberedMarkerText}>{idx + 1}</Text>
           </TouchableOpacity>
         );
       })}
@@ -320,9 +318,22 @@ export const PastorEventMap = ({ route, navigation }: { route: any; navigation: 
               <Marker
                 key={evt.id}
                 coordinate={{ latitude: evt.lat, longitude: evt.lng }}
-                pinColor={color}
                 onPress={() => handleMarkerPress(evt)}
+                tracksViewChanges={false}
+                zIndex={isSelected ? 10 : 1}
               >
+                <View style={[
+                  styles.numberedMarker,
+                  {
+                    backgroundColor: color,
+                    borderColor: isSelected ? '#FFFFFF' : color,
+                    borderWidth: isSelected ? 3 : 1,
+                    transform: [{ scale: isSelected ? 1.25 : 1 }],
+                    shadowColor: isSelected ? '#000' : 'transparent',
+                  }
+                ]}>
+                  <Text style={styles.numberedMarkerText}>{idx + 1}</Text>
+                </View>
                 <Callout tooltip>
                   <View style={styles.calloutContainer}>
                     <Text style={styles.calloutTitle}>{evt.title}</Text>
@@ -525,16 +536,19 @@ const styles = StyleSheet.create({
     color: colors.warning,
     flex: 1
   },
-  mockMarker: {
-    position: 'absolute',
+  numberedMarker: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 15
+    zIndex: 15,
+    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 }
   },
-  mockMarkerText: {
+  numberedMarkerText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800'
