@@ -87,6 +87,14 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
   const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [calcTrigger, setCalcTrigger] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Force recalculation when coming back from Route Planner
+      setCalcTrigger(prev => prev + 1);
+    }, [])
+  );
 
   useEffect(() => {
     const calcStats = async () => {
@@ -146,7 +154,7 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     };
 
     calcStats();
-  }, [activeTab, selectedDateFilter, events.length]);
+  }, [activeTab, selectedDateFilter, events.length, calcTrigger]);
 
   const handleAddressSubmit = async (newAddress: string) => {
     if (!newAddress.trim()) return;
@@ -161,9 +169,8 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         const { lat, lng } = geoData.results[0].geometry.location;
         await saveStartingLocation({ name: newAddress, lat, lng });
         
-        // Force refresh by toggling tab off and on, or by manually calling calcStats.
-        // Easiest is just manually trigger a state update.
-        setEvents([...events]); // Hacky but forces calcStats effect
+        // Force refresh
+        setCalcTrigger(prev => prev + 1);
       }
     } catch (e) {
       console.log('Geocoding failed');
