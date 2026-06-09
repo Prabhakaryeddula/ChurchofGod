@@ -126,10 +126,12 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
         </View>
 
         {/* Description Card */}
-        {event.description ? (
+        {event.description && event.description.replace(/--- Travel Estimation ---[\s\S]*/, '').trim() ? (
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Description</Text>
-            <Text style={styles.bodyText}>{event.description}</Text>
+            <Text style={styles.bodyText}>
+              {event.description.replace(/--- Travel Estimation ---[\s\S]*/, '').trim()}
+            </Text>
           </View>
         ) : null}
 
