@@ -377,7 +377,6 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Fetching Salesforce Events...</Text>
         </View>
       ) : filteredEvents.length === 0 ? (
         <View style={styles.emptyContainer}>
