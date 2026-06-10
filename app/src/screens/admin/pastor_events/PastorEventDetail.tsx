@@ -348,7 +348,11 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
 
         {/* Next Chronological Event Distance Planning Card */}
         {globalNextEvent && (
-          <View style={styles.card}>
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => navigation.push('EventDetail', { event: globalNextEvent, allEvents })}
+            activeOpacity={0.7}
+          >
             <Text style={styles.cardLabel}>Next Scheduled Event</Text>
             
             <View style={{ marginBottom: spacing.md }}>
@@ -374,7 +378,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
                 {nextEventTravel.currentToNextKm > 0 && (
                   <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary }}>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4 }}>
-                      Current Event → Next Event
+                      Current Event to Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Ionicons name="map-outline" size={14} color={colors.primary} />
@@ -391,9 +395,9 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
                 )}
                 
                 {nextEventTravel.homeToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm }}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', marginBottom: 4 }}>
-                      Home → Next Event
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4 }}>
+                      Home to Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Ionicons name="home-outline" size={14} color={colors.primary} />
@@ -410,7 +414,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
                 )}
               </View>
             )}
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Action Buttons */}
