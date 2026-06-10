@@ -375,43 +375,53 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
               <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.md }} />
             ) : (
               <View style={{ gap: spacing.sm }}>
-                {nextEventTravel.currentToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>
-                      Current Event to Next Event
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="map-outline" size={14} color={colors.primary} />
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
-                        Distance: {nextEventTravel.currentToNextKm.toFixed(1)} km
-                      </Text>
-                      <View style={{ width: 1, height: 12, backgroundColor: colors.border, marginHorizontal: 8 }} />
-                      <Ionicons name="car-outline" size={14} color={colors.primary} />
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
-                        Travel: {nextEventTravel.currentToNextMins >= 60 ? `${Math.floor(nextEventTravel.currentToNextMins / 60)}h ${nextEventTravel.currentToNextMins % 60}m` : `${nextEventTravel.currentToNextMins}m`}
+                  <View style={{ backgroundColor: `${colors.primary}10`, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: `${colors.primary}30`, marginBottom: spacing.xs }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'center' }}>
+                      <Ionicons name="navigate-circle" size={18} color={colors.primary} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginLeft: 6, letterSpacing: 0.5 }}>
+                        Current Event to Next Event
                       </Text>
                     </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF', paddingVertical: 8, borderRadius: radius.sm, borderWidth: 1, borderColor: `${colors.primary}15` }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }}>
+                        <Ionicons name="map" size={16} color={colors.primaryDark} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginLeft: 6 }}>
+                          {nextEventTravel.currentToNextKm.toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textTertiary }}>km</Text>
+                        </Text>
+                      </View>
+                      <View style={{ width: 1, height: 20, backgroundColor: `${colors.primary}20` }} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }}>
+                        <Ionicons name="car" size={18} color={colors.primaryDark} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginLeft: 6 }}>
+                          {nextEventTravel.currentToNextMins >= 60 ? `${Math.floor(nextEventTravel.currentToNextMins / 60)}h ${nextEventTravel.currentToNextMins % 60}m` : `${nextEventTravel.currentToNextMins}m`}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                )}
                 
-                {nextEventTravel.homeToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>
-                      Home to Next Event
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="home-outline" size={14} color={colors.primary} />
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
-                        Distance: {nextEventTravel.homeToNextKm.toFixed(1)} km
-                      </Text>
-                      <View style={{ width: 1, height: 12, backgroundColor: colors.border, marginHorizontal: 8 }} />
-                      <Ionicons name="car-outline" size={14} color={colors.primary} />
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
-                        Travel: {nextEventTravel.homeToNextMins >= 60 ? `${Math.floor(nextEventTravel.homeToNextMins / 60)}h ${nextEventTravel.homeToNextMins % 60}m` : `${nextEventTravel.homeToNextMins}m`}
+                  <View style={{ backgroundColor: `${colors.primary}10`, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: `${colors.primary}30` }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'center' }}>
+                      <Ionicons name="home" size={16} color={colors.primary} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginLeft: 6, letterSpacing: 0.5 }}>
+                        Home to Next Event
                       </Text>
                     </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF', paddingVertical: 8, borderRadius: radius.sm, borderWidth: 1, borderColor: `${colors.primary}15` }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }}>
+                        <Ionicons name="map" size={16} color={colors.primaryDark} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginLeft: 6 }}>
+                          {nextEventTravel.homeToNextKm.toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textTertiary }}>km</Text>
+                        </Text>
+                      </View>
+                      <View style={{ width: 1, height: 20, backgroundColor: `${colors.primary}20` }} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }}>
+                        <Ionicons name="car" size={18} color={colors.primaryDark} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginLeft: 6 }}>
+                          {nextEventTravel.homeToNextMins >= 60 ? `${Math.floor(nextEventTravel.homeToNextMins / 60)}h ${nextEventTravel.homeToNextMins % 60}m` : `${nextEventTravel.homeToNextMins}m`}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                )}
               </View>
             )}
           </TouchableOpacity>
