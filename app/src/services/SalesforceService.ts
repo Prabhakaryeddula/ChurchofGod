@@ -1673,13 +1673,28 @@ spfkUchVp71l4aWpCW50lro=
       const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
       const geocode = async (address: string) => {
         if (!address || !GOOGLE_KEY) return { lat: 0, lng: 0 };
+        
+        const cacheKey = `geocode_${address}`;
+        try {
+          const cached = await AsyncStorage.getItem(cacheKey);
+          if (cached) return JSON.parse(cached);
+        } catch (e) {
+          // ignore cache read error
+        }
+
         try {
           const resp = await fetch(
             `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_KEY}`
           );
           const data = await resp.json();
           if (data.status === 'OK' && data.results?.length > 0) {
-            return data.results[0].geometry.location;
+            const coords = data.results[0].geometry.location;
+            try {
+              await AsyncStorage.setItem(cacheKey, JSON.stringify(coords));
+            } catch (e) {
+              // ignore cache write error
+            }
+            return coords;
           }
         } catch (err) {
           console.warn('⚠️ [getPastorEvents] Geocode failed for:', address);
