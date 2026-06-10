@@ -376,8 +376,8 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
             ) : (
               <View style={{ gap: spacing.sm }}>
                 {nextEventTravel.currentToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4 }}>
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>
                       Current Event to Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -395,8 +395,8 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
                 )}
                 
                 {nextEventTravel.homeToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4 }}>
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>
                       Home to Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
