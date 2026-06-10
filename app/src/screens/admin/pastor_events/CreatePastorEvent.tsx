@@ -39,7 +39,11 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
   const [eventType, setEventType] = useState('');
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
-  const [durationHours, setDurationHours] = useState('1');
+  const [endTime, setEndTime] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() + 1);
+    return d;
+  });
   const [venue, setVenue] = useState('');
   const [address, setAddress] = useState('');
   const [pinCode, setPinCode] = useState('');
@@ -49,6 +53,11 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
   // UI state for Pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // Derived state
+  const durationMinsNum = Math.max(0, (endTime.getTime() - startTime.getTime()) / 60000);
+  const durationHoursDerived = durationMinsNum > 0 ? (durationMinsNum / 60).toFixed(1).replace(/\.0$/, '') : '0';
 
   const editEvent = route?.params?.editEvent;
 
@@ -69,11 +78,13 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
           if (modifier.toUpperCase() === 'PM') h += 12;
           timeDate.setHours(h, parseInt(minutes || '0', 10), 0, 0);
           setStartTime(timeDate);
+          
+          if (editEvent.durationMins) {
+            setEndTime(new Date(timeDate.getTime() + editEvent.durationMins * 60000));
+          } else {
+            setEndTime(new Date(timeDate.getTime() + 60 * 60000));
+          }
         }
-      }
-      
-      if (editEvent.durationMins) {
-        setDurationHours((editEvent.durationMins / 60).toString());
       }
       
       setVenue(editEvent.venue || '');
@@ -118,6 +129,14 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
       setAlertConfig({ visible: true, title: 'Validation Error', message: 'Please enter a full address for maps integration.', type: 'warning' });
       return;
     }
+    if (!pinCode.trim()) {
+      setAlertConfig({ visible: true, title: 'Validation Error', message: 'Please enter a PIN Code to ensure location accuracy.', type: 'warning' });
+      return;
+    }
+    if (endTime <= startTime) {
+      setAlertConfig({ visible: true, title: 'Validation Error', message: 'End Time must be greater than Start Time.', type: 'warning' });
+      return;
+    }
 
     const targetContactId = member?.id || fallbackContactId;
     if (!targetContactId) {
@@ -128,14 +147,13 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
     setLoading(true);
 
     try {
-      // Calculate start and end date times (defaulting event duration to 1 hour since we removed the manual duration field)
+      // Calculate start and end date times
       const startDateTime = new Date(date);
       startDateTime.setHours(startTime.getHours());
       startDateTime.setMinutes(startTime.getMinutes());
       startDateTime.setSeconds(0);
       startDateTime.setMilliseconds(0);
 
-      const durationMinsNum = (parseFloat(durationHours) || 1) * 60;
       const endDateTime = new Date(startDateTime.getTime() + durationMinsNum * 60 * 1000);
 
       // Build full address with PIN code for geocoding
@@ -367,18 +385,36 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
                 />
               )}
             </View>
+            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
+              <Text style={styles.label}>End Time *</Text>
+              <TouchableOpacity style={styles.dropdown} onPress={() => setShowEndTimePicker(true)}>
+                <Text style={styles.dropdownText}>
+                  {endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
+                </Text>
+                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+              {showEndTimePicker && (
+                <DateTimePicker
+                  value={endTime}
+                  mode="time"
+                  display="default"
+                  is24Hour={false}
+                  onChange={(event, selectedTime) => {
+                    setShowEndTimePicker(false);
+                    if (selectedTime) setEndTime(selectedTime);
+                  }}
+                />
+              )}
+            </View>
           </View>
 
           <View style={[styles.inputGroup, { marginTop: spacing.md }]}>
-            <Text style={styles.label}>Event Meeting Length (Hours) *</Text>
-            <TextInput
-              style={styles.input}
-              placeholderTextColor={colors.textTertiary}
-              placeholder="e.g. 1.5"
-              keyboardType="numeric"
-              value={durationHours}
-              onChangeText={setDurationHours}
-            />
+            <Text style={styles.label}>Meeting Length (Calculated)</Text>
+            <View style={[styles.input, { backgroundColor: colors.bgSecondary, justifyContent: 'center' }]}>
+              <Text style={{ color: colors.textPrimary }}>
+                {durationHoursDerived} Hour{parseFloat(durationHoursDerived) !== 1 ? 's' : ''}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -411,7 +447,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PIN Code (improves map accuracy)</Text>
+            <Text style={styles.label}>PIN Code * (Improves map accuracy)</Text>
             <TextInput
               style={styles.input}
               placeholderTextColor={colors.textTertiary}
