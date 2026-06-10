@@ -102,7 +102,16 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
   const filteredEvents = (selectedDateFilter
     ? events.filter(evt => evt.date === selectedDateFilter)
     : events.filter(evt => evt.section === activeTab)
-  ).sort((a, b) => timeToMins(a.startTime) - timeToMins(b.startTime));
+  ).sort((a, b) => {
+    if (a.date !== b.date) {
+      return activeTab === 'past'
+        ? b.date.localeCompare(a.date)
+        : a.date.localeCompare(b.date);
+    }
+    return activeTab === 'past'
+      ? timeToMins(b.startTime) - timeToMins(a.startTime)
+      : timeToMins(a.startTime) - timeToMins(b.startTime);
+  });
 
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
   const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
