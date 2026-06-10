@@ -271,8 +271,8 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         marginTop: 8
       }}>
         <Ionicons name="location-outline" size={16} color={colors.primary} />
-        <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: '600', color: colors.primary }}>
-          {item.address || item.venue || 'No location provided'}
+        <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: '600', color: colors.primary }} numberOfLines={1}>
+          {item.venue && item.venue !== item.address ? `${item.venue} - ${item.address}` : item.address || item.venue || 'No location provided'}
         </Text>
       </View>
 

@@ -1728,10 +1728,16 @@ spfkUchVp71l4aWpCW50lro=
           endTimeStr = `${h}:${mStr} ${ampm}`;
         }
         const duration = startDT && endDT ? Math.round((endDT.getTime() - startDT.getTime()) / 60000) : 60;
+        let parsedVenue = r.Location || '';
+        let parsedAddress = r.Address__c || r.Location || '';
         
-        // Geocode the address to get lat/lng
-        const fullAddress = r.Address__c || r.Location || '';
-        const coords = await geocode(fullAddress);
+        if (!r.Address__c && r.Location && r.Location.includes(' — ')) {
+          const parts = r.Location.split(' — ');
+          parsedVenue = parts[0].trim();
+          parsedAddress = parts.slice(1).join(' — ').trim();
+        }
+
+        const coords = await geocode(parsedAddress || parsedVenue);
 
         return {
           id: r.Id,
@@ -1741,8 +1747,8 @@ spfkUchVp71l4aWpCW50lro=
           startTime: timeStr,
           endTime: endTimeStr,
           durationMins: duration,
-          venue: r.Location || '',
-          address: fullAddress,
+          venue: parsedVenue,
+          address: parsedAddress,
           lat: coords.lat || 0,
           lng: coords.lng || 0,
           description: r.Description || '',
