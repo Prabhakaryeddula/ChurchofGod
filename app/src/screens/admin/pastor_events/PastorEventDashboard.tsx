@@ -19,7 +19,7 @@ import SalesforceService from '../../../services/SalesforceService';
 import EventTypeBadge from '../../../components/EventTypeBadge';
 import DistanceBadge from '../../../components/DistanceBadge';
 import { getStartingLocation, saveStartingLocation, formatDuration } from '../../../utils/locationStore';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 
 // No hardcoded events fallbacks
@@ -149,13 +149,35 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
             const originStr = i === 0 ? `${prevLat},${prevLng}` : `${filteredEvents[i-1].lat},${filteredEvents[i-1].lng}`;
             const destStr = `${evt.lat},${evt.lng}`;
             
-            const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_KEY}`);
-            const distData = await distResp.json();
-            if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
-              const element = distData.rows[0].elements[0];
-              totalKm += element.distance.value / 1000;
-              totalMins += Math.round(element.duration.value / 60);
+            const cacheKey = `dist_${originStr}_${destStr}`;
+            let distanceValue = 0;
+            let durationValue = 0;
+            
+            try {
+              const cached = await AsyncStorage.getItem(cacheKey);
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                distanceValue = parsed.distance;
+                durationValue = parsed.duration;
+              }
+            } catch (e) {}
+
+            if (distanceValue === 0) {
+              const distResp = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_KEY}`);
+              const distData = await distResp.json();
+              if (distData.status === 'OK' && distData.rows[0].elements[0].status === 'OK') {
+                const element = distData.rows[0].elements[0];
+                distanceValue = element.distance.value;
+                durationValue = element.duration.value;
+                
+                try {
+                  await AsyncStorage.setItem(cacheKey, JSON.stringify({ distance: distanceValue, duration: durationValue }));
+                } catch (e) {}
+              }
             }
+            
+            totalKm += distanceValue / 1000;
+            totalMins += Math.round(durationValue / 60);
           }
         }
         setDynamicStats({ km: totalKm, mins: totalMins, loading: false });
