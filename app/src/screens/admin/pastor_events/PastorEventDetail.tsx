@@ -372,8 +372,8 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
             ) : (
               <View style={{ gap: spacing.sm }}>
                 {nextEventTravel.currentToNextKm > 0 && (
-                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm }}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', marginBottom: 4 }}>
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm, borderLeftWidth: 3, borderLeftColor: colors.primary }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', marginBottom: 4 }}>
                       Current Event → Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -393,7 +393,7 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
                 {nextEventTravel.homeToNextKm > 0 && (
                   <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm }}>
                     <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', marginBottom: 4 }}>
-                      Home Base → Next Event
+                      Home → Next Event
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Ionicons name="home-outline" size={14} color={colors.primary} />
