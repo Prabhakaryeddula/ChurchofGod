@@ -342,29 +342,29 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             />
           </View>
 
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Date *</Text>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.dropdownText}>
+                {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
+              <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setDate(selectedDate);
+                }}
+              />
+            )}
+          </View>
+
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Date *</Text>
-              <TouchableOpacity style={styles.dropdown} onPress={() => setShowDatePicker(true)}>
-                <Text style={styles.dropdownText}>
-                  {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </Text>
-                <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker(false);
-                    if (selectedDate) setDate(selectedDate);
-                  }}
-                />
-              )}
-            </View>
-
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
               <Text style={styles.label}>Start Time *</Text>
               <TouchableOpacity style={styles.dropdown} onPress={() => setShowTimePicker(true)}>
                 <Text style={styles.dropdownText}>
@@ -385,6 +385,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
                 />
               )}
             </View>
+
             <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.md }]}>
               <Text style={styles.label}>End Time *</Text>
               <TouchableOpacity style={styles.dropdown} onPress={() => setShowEndTimePicker(true)}>
