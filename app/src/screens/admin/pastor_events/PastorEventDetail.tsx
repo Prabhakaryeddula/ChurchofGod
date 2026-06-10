@@ -19,6 +19,7 @@ import { PastorEvent } from '../../../types/event';
 import { openInMaps } from '../../../utils/maps';
 import EventTypeBadge from '../../../components/EventTypeBadge';
 import DistanceBadge from '../../../components/DistanceBadge';
+import { getStartingLocation } from '../../../utils/locationStore';
 
 export const PastorEventDetail = ({ route, navigation }: { route: any; navigation: any }) => {
   const { event, allEvents = [] } = route.params as { event: PastorEvent; allEvents: PastorEvent[] };
@@ -65,6 +66,76 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
   
   const eventIndex = sameDayEvents.findIndex(e => e.id === event.id);
   const nextEvent = sameDayEvents[eventIndex + 1];
+
+  // Global Next Event for Distance calculations
+  const globalEventIndex = allEvents.findIndex(e => e.id === event.id);
+  const globalNextEvent = globalEventIndex >= 0 && globalEventIndex < allEvents.length - 1 ? allEvents[globalEventIndex + 1] : undefined;
+
+  const [nextEventTravel, setNextEventTravel] = React.useState<{
+    loading: boolean;
+    currentToNextKm: number;
+    currentToNextMins: number;
+    homeToNextKm: number;
+    homeToNextMins: number;
+  }>({ loading: false, currentToNextKm: 0, currentToNextMins: 0, homeToNextKm: 0, homeToNextMins: 0 });
+
+  React.useEffect(() => {
+    if (!globalNextEvent || !globalNextEvent.lat || !globalNextEvent.lng) return;
+
+    const calculateTravel = async () => {
+      setNextEventTravel(prev => ({ ...prev, loading: true }));
+      try {
+        const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+        if (!GOOGLE_KEY) {
+          setNextEventTravel(prev => ({ ...prev, loading: false }));
+          return;
+        }
+
+        const destLat = globalNextEvent.lat;
+        const destLng = globalNextEvent.lng;
+
+        // 1. Current Event -> Next Event
+        let curToNextKm = 0;
+        let curToNextMins = 0;
+        if (event.lat && event.lng) {
+          const res1 = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${event.lat},${event.lng}&destinations=${destLat},${destLng}&key=${GOOGLE_KEY}`);
+          const data1 = await res1.json();
+          if (data1.status === 'OK' && data1.rows[0].elements[0].status === 'OK') {
+            const element = data1.rows[0].elements[0];
+            curToNextKm = element.distance.value / 1000;
+            curToNextMins = Math.round(element.duration.value / 60);
+          }
+        }
+
+        // 2. Home -> Next Event
+        let homeToNextKm = 0;
+        let homeToNextMins = 0;
+        const home = await getStartingLocation();
+        if (home && home.lat && home.lng) {
+          const res2 = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${home.lat},${home.lng}&destinations=${destLat},${destLng}&key=${GOOGLE_KEY}`);
+          const data2 = await res2.json();
+          if (data2.status === 'OK' && data2.rows[0].elements[0].status === 'OK') {
+            const element = data2.rows[0].elements[0];
+            homeToNextKm = element.distance.value / 1000;
+            homeToNextMins = Math.round(element.duration.value / 60);
+          }
+        }
+
+        setNextEventTravel({
+          loading: false,
+          currentToNextKm: curToNextKm,
+          currentToNextMins: curToNextMins,
+          homeToNextKm: homeToNextKm,
+          homeToNextMins: homeToNextMins
+        });
+      } catch (e) {
+        console.warn('Failed to calculate travel for next event:', e);
+        setNextEventTravel(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    calculateTravel();
+  }, [globalNextEvent]);
 
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone}`);
@@ -272,6 +343,73 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
               <Text style={styles.plannerLinkText}>Open Route Itinerary</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Next Chronological Event Distance Planning Card */}
+        {globalNextEvent && (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Next Scheduled Event</Text>
+            
+            <View style={{ marginBottom: spacing.md }}>
+              <Text style={styles.venueTitle}>{globalNextEvent.title}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.timeVal, { marginLeft: 6, fontSize: 13, color: colors.textSecondary }]}>
+                  {formatDate(globalNextEvent.date)} • {globalNextEvent.startTime}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.timeVal, { marginLeft: 6, fontSize: 13, color: colors.textSecondary }]}>
+                  {globalNextEvent.venue || globalNextEvent.address || 'Location TBD'}
+                </Text>
+              </View>
+            </View>
+
+            {nextEventTravel.loading ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.md }} />
+            ) : (
+              <View style={{ gap: spacing.sm }}>
+                {nextEventTravel.currentToNextKm > 0 && (
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', marginBottom: 4 }}>
+                      Current Event → Next Event
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="map-outline" size={14} color={colors.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
+                        Distance: {nextEventTravel.currentToNextKm.toFixed(1)} km
+                      </Text>
+                      <View style={{ width: 1, height: 12, backgroundColor: colors.border, marginHorizontal: 8 }} />
+                      <Ionicons name="car-outline" size={14} color={colors.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
+                        Travel: {nextEventTravel.currentToNextMins >= 60 ? `${Math.floor(nextEventTravel.currentToNextMins / 60)}h ${nextEventTravel.currentToNextMins % 60}m` : `${nextEventTravel.currentToNextMins}m`}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                
+                {nextEventTravel.homeToNextKm > 0 && (
+                  <View style={{ backgroundColor: colors.bgSecondary, padding: spacing.sm, borderRadius: radius.sm }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', marginBottom: 4 }}>
+                      Home Base → Next Event
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="home-outline" size={14} color={colors.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
+                        Distance: {nextEventTravel.homeToNextKm.toFixed(1)} km
+                      </Text>
+                      <View style={{ width: 1, height: 12, backgroundColor: colors.border, marginHorizontal: 8 }} />
+                      <Ionicons name="car-outline" size={14} color={colors.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primaryDark, marginLeft: 4 }}>
+                        Travel: {nextEventTravel.homeToNextMins >= 60 ? `${Math.floor(nextEventTravel.homeToNextMins / 60)}h ${nextEventTravel.homeToNextMins % 60}m` : `${nextEventTravel.homeToNextMins}m`}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         )}
 
