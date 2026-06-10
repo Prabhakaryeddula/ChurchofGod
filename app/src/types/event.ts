@@ -8,6 +8,7 @@ export interface PastorEvent {
   type:         EventType;
   date:         string;          // ISO 8601, e.g. "2026-06-08"
   startTime:    string;          // "09:00"
+  endTime?:     string;
   durationMins: number;
   venue:        string;
   address:      string;

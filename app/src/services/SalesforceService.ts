@@ -1717,6 +1717,16 @@ spfkUchVp71l4aWpCW50lro=
           const mStr = m < 10 ? '0' + m : m;
           timeStr = `${h}:${mStr} ${ampm}`;
         }
+        let endTimeStr = '1:00 AM';
+        if (endDT) {
+          let h = endDT.getHours();
+          const m = endDT.getMinutes();
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          h = h ? h : 12;
+          const mStr = m < 10 ? '0' + m : m;
+          endTimeStr = `${h}:${mStr} ${ampm}`;
+        }
         const duration = startDT && endDT ? Math.round((endDT.getTime() - startDT.getTime()) / 60000) : 60;
         
         // Geocode the address to get lat/lng
@@ -1729,6 +1739,7 @@ spfkUchVp71l4aWpCW50lro=
           type: (r.Type || 'worship').toLowerCase(),
           date: dateStr,
           startTime: timeStr,
+          endTime: endTimeStr,
           durationMins: duration,
           venue: r.Location || '',
           address: fullAddress,

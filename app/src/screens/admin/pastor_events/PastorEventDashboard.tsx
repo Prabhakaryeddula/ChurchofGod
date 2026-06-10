@@ -245,13 +245,15 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="time-outline" size={14} color={colors.primary} />
-          <Text style={[styles.timeText, { marginLeft: 6 }]}>Starts at {item.startTime}</Text>
+          <Text style={[styles.timeText, { marginLeft: 6 }]}>
+            Start: {item.startTime}{item.endTime ? ` | End: ${item.endTime}` : ''}
+          </Text>
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="hourglass-outline" size={14} color={colors.primary} />
           <Text style={[styles.timeText, { marginLeft: 6, color: colors.textTertiary }]}>
-            Time Spent at Event: {item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`}
+            Meeting length: {item.durationMins >= 60 ? `${Math.round(item.durationMins / 60 * 10) / 10} hours` : `${item.durationMins} mins`}
           </Text>
         </View>
       </View>
@@ -270,7 +272,7 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
       }}>
         <Ionicons name="location-outline" size={16} color={colors.primary} />
         <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: '600', color: colors.primary }}>
-          Click here to know the location
+          {item.address || item.venue || 'No location provided'}
         </Text>
       </View>
 

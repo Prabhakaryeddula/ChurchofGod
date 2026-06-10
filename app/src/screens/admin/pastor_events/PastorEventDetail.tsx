@@ -158,13 +158,15 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="time-outline" size={18} color={colors.primary} />
-              <Text style={[styles.timeVal, { marginLeft: 8 }]}>Starts at {event.startTime}</Text>
+              <Text style={[styles.timeVal, { marginLeft: 8 }]}>
+                Start: {event.startTime}{event.endTime ? ` | End: ${event.endTime}` : ''}
+              </Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="hourglass-outline" size={18} color={colors.primary} />
               <Text style={[styles.timeVal, { marginLeft: 8, color: colors.textSecondary }]}>
-                Time Spent at Event: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
+                Meeting length: {event.durationMins >= 60 ? `${Math.round(event.durationMins / 60 * 10) / 10} hours` : `${event.durationMins} mins`}
               </Text>
             </View>
           </View>
