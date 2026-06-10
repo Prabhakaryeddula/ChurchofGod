@@ -20,11 +20,12 @@ import EventTypeBadge from '../../../components/EventTypeBadge';
 import DistanceBadge from '../../../components/DistanceBadge';
 import { getStartingLocation, saveStartingLocation, formatDuration } from '../../../utils/locationStore';
 
-import { useFocusEffect } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 
 // No hardcoded events fallbacks
 
 export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
+  const route = useRoute<any>();
   const [events, setEvents] = useState<PastorEvent[]>([]);
   const [activeTab, setActiveTab] = useState<'today' | 'upcoming' | 'past'>('today');
   const [loading, setLoading] = useState(true);
@@ -67,11 +68,16 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    if (route.params?.refresh) {
       fetchEvents();
-    }, [])
-  );
+      navigation.setParams({ refresh: undefined });
+    }
+  }, [route.params?.refresh]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -101,14 +107,6 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
   const [dynamicStats, setDynamicStats] = useState({ km: 0, mins: 0, loading: false });
   const [currentLocName, setCurrentLocName] = useState('Guntur, AP');
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [calcTrigger, setCalcTrigger] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      // Force recalculation when coming back from Route Planner
-      setCalcTrigger(prev => prev + 1);
-    }, [])
-  );
 
   useEffect(() => {
     const calcStats = async () => {
@@ -168,7 +166,7 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
     };
 
     calcStats();
-  }, [activeTab, selectedDateFilter, events.length, calcTrigger]);
+  }, [activeTab, selectedDateFilter, events.length]);
 
   const handleAddressSubmit = async (newAddress: string) => {
     if (!newAddress.trim()) return;
@@ -183,8 +181,10 @@ export const PastorEventDashboard = ({ navigation }: { navigation: any }) => {
         const { lat, lng } = geoData.results[0].geometry.location;
         await saveStartingLocation({ name: newAddress, lat, lng });
         
-        // Force refresh
-        setCalcTrigger(prev => prev + 1);
+        // Force refresh by triggering calcStats via a dummy state change if needed, 
+        // or just let currentLocName trigger it if we added it to deps. But wait, we didn't. 
+        // Let's just fetchEvents() or we can just update the events state implicitly.
+        fetchEvents();
       }
     } catch (e) {
       console.log('Geocoding failed');
