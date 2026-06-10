@@ -274,18 +274,18 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
         )}
 
         {/* Action Buttons */}
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8, justifyContent: 'center' }}>
           <TouchableOpacity 
-            style={[styles.card, { flex: 1, alignItems: 'center', borderColor: colors.primary }]}
+            style={styles.editBadge}
             onPress={handleEdit}
             disabled={deleting}
           >
-            <Ionicons name="pencil" size={20} color={colors.primary} />
-            <Text style={{ marginTop: 4, fontWeight: '600', color: colors.primary }}>Edit</Text>
+            <Ionicons name="pencil" size={16} color={colors.primary} />
+            <Text style={styles.editBadgeText}>Edit Event</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.card, { flex: 1, alignItems: 'center', borderColor: colors.error }]}
+            style={styles.deleteBadge}
             onPress={handleDelete}
             disabled={deleting}
           >
@@ -293,8 +293,8 @@ export const PastorEventDetail = ({ route, navigation }: { route: any; navigatio
               <ActivityIndicator color={colors.error} size="small" />
             ) : (
               <>
-                <Ionicons name="trash" size={20} color={colors.error} />
-                <Text style={{ marginTop: 4, fontWeight: '600', color: colors.error }}>Delete</Text>
+                <Ionicons name="trash" size={16} color={colors.error} />
+                <Text style={styles.deleteBadgeText}>Delete Event</Text>
               </>
             )}
           </TouchableOpacity>
@@ -470,6 +470,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.primary
+  },
+  editBadge: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.primary}1A`, // 10% opacity primary
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  editBadgeText: {
+    marginLeft: 6,
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  deleteBadge: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.error}1A`, // 10% opacity error
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  deleteBadgeText: {
+    marginLeft: 6,
+    color: colors.error,
+    fontWeight: '700',
+    fontSize: 14,
   }
 });
 
