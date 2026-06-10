@@ -306,6 +306,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Event Title *</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. Sunday Service & Prayer"
               value={title}
               onChangeText={setTitle}
@@ -316,6 +317,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Event Type</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. Worship Service, Prayer Meeting"
               value={eventType}
               onChangeText={setEventType}
@@ -371,6 +373,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Event Meeting Length (Hours) *</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. 1.5"
               keyboardType="numeric"
               value={durationHours}
@@ -387,6 +390,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Venue Name *</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. Calvary Temple, Guntur"
               value={venue}
               onChangeText={setVenue}
@@ -397,6 +401,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Full Address * (Used for Maps Routing)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. Ring Road, Arundelpet, Guntur, AP, 522002"
               multiline
               numberOfLines={3}
@@ -409,6 +414,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>PIN Code (improves map accuracy)</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={colors.textTertiary}
               placeholder="e.g. 522002"
               keyboardType="numeric"
               maxLength={10}
@@ -426,6 +432,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Description</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
+              placeholderTextColor={colors.textTertiary}
               placeholder="What is this itinerary appointment for?"
               multiline
               numberOfLines={4}
@@ -438,6 +445,7 @@ export const CreatePastorEvent = ({ route, navigation }: { route: any; navigatio
             <Text style={styles.label}>Special Notes</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
+              placeholderTextColor={colors.textTertiary}
               placeholder="Any items to bring, contacts to meet, or preparations to make?"
               multiline
               numberOfLines={3}
